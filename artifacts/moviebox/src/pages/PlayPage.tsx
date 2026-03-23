@@ -7,7 +7,6 @@ interface PlayPageProps {
   onBack: () => void;
 }
 
-const TMDB_IMG = "https://image.tmdb.org/t/p/";
 
 function generateEpisodes(count: number) {
   const durations = [42, 45, 48, 51, 44, 46, 50, 43, 47, 52];
@@ -58,7 +57,6 @@ export function PlayPage({ movie, onBack }: PlayPageProps) {
   const [activeTab, setActiveTab] = useState<"episodes" | "related">(
     movie.type === "series" ? "episodes" : "related"
   );
-  const [descExpanded, setDescExpanded] = useState(false);
   const [selectedEp, setSelectedEp] = useState(1);
   const [backdropErr, setBackdropErr] = useState(false);
 
@@ -66,8 +64,8 @@ export function PlayPage({ movie, onBack }: PlayPageProps) {
   const episodes = generateEpisodes(episodeCount);
 
   const related = movie.type === "series"
-    ? popularSeries.filter((m) => m.id !== movie.id).slice(0, 9)
-    : popularMovies.filter((m) => m.id !== movie.id).slice(0, 9);
+    ? popularSeries.filter((m) => m.id !== movie.id).slice(0, 14)
+    : popularMovies.filter((m) => m.id !== movie.id).slice(0, 14);
 
   return (
     <div className="fixed inset-0 z-[9999] bg-[#101114] text-white overflow-y-auto">
@@ -269,19 +267,6 @@ export function PlayPage({ movie, onBack }: PlayPageProps) {
           </button>
         </div>
 
-        {/* Description */}
-        <div className="mb-5">
-          <p className={`text-white/65 text-sm leading-relaxed ${descExpanded ? "" : "line-clamp-3"}`}>
-            {movie.description}
-          </p>
-          <button
-            onClick={() => setDescExpanded(!descExpanded)}
-            className="text-[#a855f7] text-xs mt-1.5 font-semibold"
-          >
-            {descExpanded ? "Show less ▲" : "More ▼"}
-          </button>
-        </div>
-
         {/* Tabs */}
         <div className="flex items-center border-b border-white/10 mb-4">
           {movie.type === "series" && (
@@ -304,66 +289,33 @@ export function PlayPage({ movie, onBack }: PlayPageProps) {
           </button>
         </div>
 
-        {/* Episodes list */}
+        {/* Episodes grid — small numbered boxes */}
         {activeTab === "episodes" && movie.type === "series" && (
-          <div className="flex flex-col gap-2">
+          <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2">
             {episodes.map((ep) => (
               <button
                 key={ep.ep}
                 onClick={() => setSelectedEp(ep.ep)}
-                className={`flex items-center gap-3 p-2.5 rounded-xl text-left transition-colors ${
+                className={`aspect-square rounded-lg flex items-center justify-center text-sm font-bold transition-all active:scale-95 ${
                   selectedEp === ep.ep
-                    ? "bg-[#a855f7]/15 border border-[#a855f7]/35"
-                    : "bg-white/5 border border-transparent"
+                    ? "text-white border border-[#a855f7]/60"
+                    : "bg-white/8 text-white/70 hover:bg-white/15 border border-transparent"
                 }`}
+                style={
+                  selectedEp === ep.ep
+                    ? { background: "linear-gradient(135deg,#a855f7,#ec4899)" }
+                    : { background: "rgba(255,255,255,0.07)" }
+                }
               >
-                {/* Thumbnail */}
-                <div
-                  className="relative flex-shrink-0 rounded-lg overflow-hidden bg-[#1a1c24]"
-                  style={{ width: 88, height: 52 }}
-                >
-                  <img
-                    src={`${TMDB_IMG}w300${movie.backdrop.replace(/.*original/, "")}`}
-                    alt=""
-                    className="w-full h-full object-cover opacity-50"
-                    onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0"; }}
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    {selectedEp === ep.ep ? (
-                      <div
-                        className="w-7 h-7 rounded-full flex items-center justify-center"
-                        style={{ background: "linear-gradient(135deg,#a855f7,#ec4899)" }}
-                      >
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="white">
-                          <path d="M8 5v14l11-7z"/>
-                        </svg>
-                      </div>
-                    ) : (
-                      <span className="text-white/50 text-xs font-bold">{ep.ep}</span>
-                    )}
-                  </div>
-                </div>
-                {/* Text */}
-                <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-semibold leading-tight ${selectedEp === ep.ep ? "text-[#c084fc]" : "text-white"}`}>
-                    {ep.title}
-                  </p>
-                  <p className="text-white/40 text-xs mt-0.5">{ep.duration}</p>
-                </div>
-                {selectedEp === ep.ep && (
-                  <div
-                    className="flex-shrink-0 w-1 h-7 rounded-full"
-                    style={{ background: "linear-gradient(180deg,#a855f7,#ec4899)" }}
-                  />
-                )}
+                {ep.ep}
               </button>
             ))}
           </div>
         )}
 
-        {/* Related grid */}
+        {/* Related grid — matches home page movie card sizing */}
         {activeTab === "related" && (
-          <div className="grid grid-cols-3 gap-2.5">
+          <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3 md:gap-4">
             {related.map((m) => (
               <RelatedCard key={m.id} movie={m} />
             ))}
