@@ -4,6 +4,31 @@
 
 pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
 
+## Firebase Integration
+
+Firebase project: `true-light-37917`
+
+### Authentication
+- Email/Password sign in & sign up
+- Google OAuth login
+- Phone number collected as a required field on signup (stored in Firestore, not Firebase Phone Auth)
+- Auth state managed via `src/contexts/AuthContext.tsx`
+- User profiles stored in `userProfiles` Firestore collection
+
+### Firestore Collections
+- `movies` — movie content added via VJ Dashboard
+- `series` — series content
+- `episodes` — individual episodes linked to series
+- `userProfiles` — all registered user profiles (uid = doc id)
+- `transactions` — subscription payments and withdrawals
+- `activities` — user activity log
+
+### Required Firebase Console Setup
+1. Enable **Email/Password** auth provider
+2. Enable **Google** auth provider
+3. Add your Replit dev domain to **Authorized Domains** in Authentication settings
+4. Set Firestore **Security Rules** to allow authenticated reads/writes
+
 ## MovieBox Website
 
 A movie streaming website clone (`artifacts/moviebox`) built as a React + Vite SPA. Replicates the MovieBox design exactly including:

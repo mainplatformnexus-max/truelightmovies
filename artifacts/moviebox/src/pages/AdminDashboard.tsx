@@ -1,78 +1,31 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import {
+  collection,
+  onSnapshot,
+  deleteDoc,
+  updateDoc,
+  doc,
+  query,
+  orderBy,
+  addDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+import { db } from "../lib/firebase";
+import { useAuth } from "../contexts/AuthContext";
 
 type Section = "movies" | "series" | "episodes" | "users" | "activities" | "wallet";
 
 const PLANS = ["1 Day", "1 Week", "1 Month"];
 const CATEGORIES = ["Action","Comedy","Drama","Horror","Romance","Sci-Fi","Thriller","Animation","Documentary","Christian"];
 
-interface AdminMovie { id: number; title: string; category: string; year: number; url: string; thumbnail: string; views: number; popular: boolean; vjName: string; }
-interface AdminSeries { id: number; title: string; category: string; year: number; seasons: number; episodes: number; thumbnail: string; popular: boolean; vjName: string; }
-interface AdminEpisode { id: number; seriesId: number; seriesTitle: string; season: number; episode: number; title: string; url: string; duration: string; }
-interface AdminUser { id: number; name: string; email: string; phone: string; joined: string; plan: string | null; planExpiry: string | null; status: "active" | "expired" | "blocked" | "none"; }
-interface Activity { id: number; username: string; phone: string; action: string; time: string; timestamp: number; }
-interface AdminTransaction { id: number; type: string; amount: number; description: string; date: string; status: "completed" | "pending" | "failed"; phone?: string; }
+interface AdminMovie { id: string; title: string; category: string; year: number; url: string; thumbnail: string; views: number; popular: boolean; vjName: string; }
+interface AdminSeries { id: string; title: string; category: string; year: number; seasons: number; episodes: number; thumbnail: string; popular: boolean; vjName: string; }
+interface AdminEpisode { id: string; seriesId: string; seriesTitle?: string; season: number; episode: number; title: string; url: string; duration: string; }
+interface AdminUser { id: string; displayName: string; email: string; phone: string; joined: string; plan: string | null; planExpiry: string | null; status: "active" | "expired" | "blocked" | "none"; }
+interface Activity { id: string; username: string; phone: string; action: string; time: string; timestamp: number; }
+interface AdminTransaction { id: string; type: string; amount: number; description: string; date: string; status: "completed" | "pending" | "failed"; phone?: string; }
 
-const initMovies: AdminMovie[] = [
-  { id:1, title:"Deadpool & Wolverine", category:"Action", year:2024, url:"https://example.com/dp.mp4", thumbnail:"", views:12400, popular:true, vjName:"VJ Emma" },
-  { id:2, title:"Dune: Part Two", category:"Sci-Fi", year:2024, url:"https://example.com/dune.mp4", thumbnail:"", views:9800, popular:true, vjName:"VJ Emma" },
-  { id:3, title:"Oppenheimer", category:"Drama", year:2023, url:"https://example.com/opp.mp4", thumbnail:"", views:7200, popular:false, vjName:"VJ Emma" },
-  { id:4, title:"Gladiator II", category:"Action", year:2024, url:"https://example.com/gl2.mp4", thumbnail:"", views:5600, popular:true, vjName:"VJ Emma" },
-  { id:5, title:"Moana 2", category:"Animation", year:2024, url:"https://example.com/mn2.mp4", thumbnail:"", views:4300, popular:false, vjName:"VJ Emma" },
-];
-
-const initSeries: AdminSeries[] = [
-  { id:1, title:"House of the Dragon", category:"Drama", year:2022, seasons:2, episodes:18, thumbnail:"", popular:true, vjName:"VJ Emma" },
-  { id:2, title:"The Last of Us", category:"Thriller", year:2023, seasons:1, episodes:9, thumbnail:"", popular:true, vjName:"VJ Emma" },
-  { id:3, title:"Fallout", category:"Sci-Fi", year:2024, seasons:1, episodes:8, thumbnail:"", popular:false, vjName:"VJ Emma" },
-  { id:4, title:"Shogun", category:"Drama", year:2024, seasons:1, episodes:10, thumbnail:"", popular:true, vjName:"VJ Emma" },
-];
-
-const initEpisodes: AdminEpisode[] = [
-  { id:1, seriesId:1, seriesTitle:"House of the Dragon", season:1, episode:1, title:"The Heirs of the Dragon", url:"https://example.com/hotd-s1e1.mp4", duration:"1h 06m" },
-  { id:2, seriesId:1, seriesTitle:"House of the Dragon", season:1, episode:2, title:"The Rogue Prince", url:"https://example.com/hotd-s1e2.mp4", duration:"58m" },
-  { id:3, seriesId:2, seriesTitle:"The Last of Us", season:1, episode:1, title:"When You're Lost in the Darkness", url:"https://example.com/tlou-s1e1.mp4", duration:"1h 21m" },
-  { id:4, seriesId:2, seriesTitle:"The Last of Us", season:1, episode:2, title:"Infected", url:"https://example.com/tlou-s1e2.mp4", duration:"55m" },
-  { id:5, seriesId:3, seriesTitle:"Fallout", season:1, episode:1, title:"The End", url:"https://example.com/fo-s1e1.mp4", duration:"1h 02m" },
-];
-
-const initUsers: AdminUser[] = [
-  { id:1, name:"Alice Nakamura", email:"alice@email.com", phone:"+256701234567", joined:"2024-01-15", plan:"1 Month", planExpiry:"2026-04-15", status:"active" },
-  { id:2, name:"Bob Okello", email:"bob@email.com", phone:"+256782345678", joined:"2024-03-20", plan:"1 Week", planExpiry:"2026-03-27", status:"expired" },
-  { id:3, name:"Carol Amina", email:"carol@email.com", phone:"+256753456789", joined:"2024-06-01", plan:null, planExpiry:null, status:"none" },
-  { id:4, name:"David Ssempa", email:"david@email.com", phone:"+256774567890", joined:"2025-01-10", plan:"1 Month", planExpiry:"2026-05-10", status:"active" },
-  { id:5, name:"Eve Namukasa", email:"eve@email.com", phone:"+256705678901", joined:"2025-02-28", plan:null, planExpiry:null, status:"blocked" },
-  { id:6, name:"Frank Mugisha", email:"frank@email.com", phone:"+256786789012", joined:"2025-03-15", plan:"1 Day", planExpiry:"2026-03-16", status:"active" },
-  { id:7, name:"Grace Achieng", email:"grace@email.com", phone:"+256757890123", joined:"2025-04-02", plan:null, planExpiry:null, status:"none" },
-];
-
-const initActivities: Activity[] = [
-  { id:1, username:"David Ssempa", phone:"+256774567890", action:"Clicked 'Watch Now' on Deadpool & Wolverine", time:"2026-03-23 14:32:05", timestamp:1742737925 },
-  { id:2, username:"Alice Nakamura", phone:"+256701234567", action:"Opened Subscribe Modal", time:"2026-03-23 14:28:12", timestamp:1742737692 },
-  { id:3, username:"Bob Okello", phone:"+256782345678", action:"Clicked 'See All' on Popular Series", time:"2026-03-23 14:25:44", timestamp:1742737544 },
-  { id:4, username:"Frank Mugisha", phone:"+256786789012", action:"Clicked on House of the Dragon", time:"2026-03-23 14:20:30", timestamp:1742737230 },
-  { id:5, username:"Grace Achieng", phone:"+256757890123", action:"Opened Login Modal", time:"2026-03-23 14:18:55", timestamp:1742737135 },
-  { id:6, username:"David Ssempa", phone:"+256774567890", action:"Selected '1 Month' subscription plan", time:"2026-03-23 14:15:02", timestamp:1742736902 },
-  { id:7, username:"Carol Amina", phone:"+256753456789", action:"Clicked on Dune: Part Two", time:"2026-03-23 14:10:18", timestamp:1742736618 },
-  { id:8, username:"Alice Nakamura", phone:"+256701234567", action:"Clicked 'Watch Now' on House of the Dragon", time:"2026-03-23 13:58:44", timestamp:1742735924 },
-  { id:9, username:"Bob Okello", phone:"+256782345678", action:"Clicked 'Top Rated' in Sidebar", time:"2026-03-23 13:45:22", timestamp:1742735122 },
-  { id:10, username:"Frank Mugisha", phone:"+256786789012", action:"Opened Subscribe Modal", time:"2026-03-23 13:40:11", timestamp:1742734811 },
-  { id:11, username:"Grace Achieng", phone:"+256757890123", action:"Clicked on Oppenheimer", time:"2026-03-23 13:35:07", timestamp:1742734507 },
-  { id:12, username:"Carol Amina", phone:"+256753456789", action:"Clicked 'Movies' in Sidebar", time:"2026-03-23 13:20:33", timestamp:1742733633 },
-  { id:13, username:"David Ssempa", phone:"+256774567890", action:"Clicked 'TV Shows' in Sidebar", time:"2026-03-23 13:12:08", timestamp:1742733128 },
-  { id:14, username:"Alice Nakamura", phone:"+256701234567", action:"Completed Payment — 1 Month Plan", time:"2026-03-23 12:58:15", timestamp:1742732295 },
-  { id:15, username:"Bob Okello", phone:"+256782345678", action:"Clicked on Fallout Series", time:"2026-03-23 12:45:00", timestamp:1742731500 },
-];
-
-const initTransactions: AdminTransaction[] = [
-  { id:1, type:"subscription", amount:20000, description:"1 Month Plan — Alice Nakamura", date:"2026-03-23", status:"completed", phone:"+256701234567" },
-  { id:2, type:"subscription", amount:5000, description:"1 Week Plan — Bob Okello", date:"2026-03-20", status:"completed", phone:"+256782345678" },
-  { id:3, type:"subscription", amount:2000, description:"1 Day Plan — Frank Mugisha", date:"2026-03-15", status:"completed", phone:"+256786789012" },
-  { id:4, type:"subscription", amount:20000, description:"1 Month Plan — David Ssempa", date:"2026-03-10", status:"completed", phone:"+256774567890" },
-  { id:5, type:"subscription", amount:5000, description:"1 Week Plan — Carol Amina", date:"2026-03-05", status:"pending", phone:"+256753456789" },
-];
-
-const totalRevenue = initTransactions.filter(t => t.status === "completed").reduce((s,t) => s + t.amount, 0);
-const walletBalance = totalRevenue;
+const fmt = (n: number) => `UGX ${n.toLocaleString()}`;
 
 const statusBadge = (s: string) => {
   const map: Record<string, string> = {
@@ -86,8 +39,6 @@ const statusBadge = (s: string) => {
   };
   return `inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize ${map[s] || "bg-white/10 text-white/40"}`;
 };
-
-const fmt = (n: number) => `UGX ${n.toLocaleString()}`;
 
 const SIDEBAR_ITEMS: { id: Section; label: string; icon: React.ReactNode }[] = [
   { id:"movies", label:"Movies", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg> },
@@ -114,6 +65,18 @@ function ConfirmModal({ message, onConfirm, onCancel }: { message: string; onCon
 
 function EditMovieModal({ movie, onSave, onClose }: { movie: AdminMovie; onSave: (m: AdminMovie) => void; onClose: () => void }) {
   const [form, setForm] = useState({ ...movie });
+  const save = async () => {
+    await updateDoc(doc(db, "movies", movie.id), {
+      title: form.title,
+      url: form.url,
+      thumbnail: form.thumbnail,
+      category: form.category,
+      year: form.year,
+      popular: form.popular,
+    });
+    onSave(form);
+    onClose();
+  };
   return (
     <div className="fixed inset-0 z-[500] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.75)" }}>
       <div className="w-full max-w-md rounded-2xl p-6 shadow-2xl" style={{ background: "#13151a", border: "1px solid rgba(255,255,255,0.1)" }}>
@@ -142,7 +105,7 @@ function EditMovieModal({ movie, onSave, onClose }: { movie: AdminMovie; onSave:
         </label>
         <div className="flex gap-3">
           <button onClick={onClose} className="flex-1 h-9 rounded-lg text-xs text-white/70 border border-white/20 hover:border-white/40 transition-colors">Cancel</button>
-          <button onClick={() => { onSave(form); onClose(); }} className="flex-1 h-9 rounded-lg text-xs text-white font-bold hover:opacity-90 transition-opacity" style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}>Save Changes</button>
+          <button onClick={save} className="flex-1 h-9 rounded-lg text-xs text-white font-bold hover:opacity-90 transition-opacity" style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}>Save Changes</button>
         </div>
       </div>
     </div>
@@ -151,6 +114,18 @@ function EditMovieModal({ movie, onSave, onClose }: { movie: AdminMovie; onSave:
 
 function EditSeriesModal({ series, onSave, onClose }: { series: AdminSeries; onSave: (s: AdminSeries) => void; onClose: () => void }) {
   const [form, setForm] = useState({ ...series });
+  const save = async () => {
+    await updateDoc(doc(db, "series", series.id), {
+      title: form.title,
+      thumbnail: form.thumbnail,
+      category: form.category,
+      year: form.year,
+      seasons: form.seasons,
+      popular: form.popular,
+    });
+    onSave(form);
+    onClose();
+  };
   return (
     <div className="fixed inset-0 z-[500] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.75)" }}>
       <div className="w-full max-w-md rounded-2xl p-6 shadow-2xl" style={{ background: "#13151a", border: "1px solid rgba(255,255,255,0.1)" }}>
@@ -183,7 +158,7 @@ function EditSeriesModal({ series, onSave, onClose }: { series: AdminSeries; onS
         </label>
         <div className="flex gap-3">
           <button onClick={onClose} className="flex-1 h-9 rounded-lg text-xs text-white/70 border border-white/20 hover:border-white/40 transition-colors">Cancel</button>
-          <button onClick={() => { onSave(form); onClose(); }} className="flex-1 h-9 rounded-lg text-xs text-white font-bold hover:opacity-90 transition-opacity" style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}>Save Changes</button>
+          <button onClick={save} className="flex-1 h-9 rounded-lg text-xs text-white font-bold hover:opacity-90 transition-opacity" style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}>Save Changes</button>
         </div>
       </div>
     </div>
@@ -192,6 +167,17 @@ function EditSeriesModal({ series, onSave, onClose }: { series: AdminSeries; onS
 
 function EditEpisodeModal({ episode, onSave, onClose }: { episode: AdminEpisode; onSave: (e: AdminEpisode) => void; onClose: () => void }) {
   const [form, setForm] = useState({ ...episode });
+  const save = async () => {
+    await updateDoc(doc(db, "episodes", episode.id), {
+      title: form.title,
+      url: form.url,
+      duration: form.duration,
+      season: form.season,
+      episode: form.episode,
+    });
+    onSave(form);
+    onClose();
+  };
   return (
     <div className="fixed inset-0 z-[500] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.75)" }}>
       <div className="w-full max-w-md rounded-2xl p-6 shadow-2xl" style={{ background: "#13151a", border: "1px solid rgba(255,255,255,0.1)" }}>
@@ -214,45 +200,56 @@ function EditEpisodeModal({ episode, onSave, onClose }: { episode: AdminEpisode;
         </div>
         <div className="flex gap-3">
           <button onClick={onClose} className="flex-1 h-9 rounded-lg text-xs text-white/70 border border-white/20 hover:border-white/40 transition-colors">Cancel</button>
-          <button onClick={() => { onSave(form); onClose(); }} className="flex-1 h-9 rounded-lg text-xs text-white font-bold hover:opacity-90 transition-opacity" style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}>Save Changes</button>
+          <button onClick={save} className="flex-1 h-9 rounded-lg text-xs text-white font-bold hover:opacity-90 transition-opacity" style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}>Save Changes</button>
         </div>
       </div>
     </div>
   );
 }
 
-function ManageUserModal({ user, onSave, onClose }: { user: AdminUser; onSave: (u: AdminUser) => void; onClose: () => void }) {
+function ManageUserModal({ user, onClose }: { user: AdminUser; onClose: () => void }) {
   const [plan, setPlan] = useState(user.plan || "1 Month");
   const [action, setAction] = useState<"activate" | "deactivate" | "block" | "upgrade" | "downgrade">("activate");
+  const [saving, setSaving] = useState(false);
 
-  const apply = () => {
-    let updated = { ...user };
-    if (action === "activate" || action === "upgrade" || action === "downgrade") {
-      updated.plan = plan;
-      updated.status = "active";
-      const now = new Date();
-      if (plan === "1 Day") now.setDate(now.getDate() + 1);
-      else if (plan === "1 Week") now.setDate(now.getDate() + 7);
-      else now.setMonth(now.getMonth() + 1);
-      updated.planExpiry = now.toISOString().split("T")[0];
-    } else if (action === "deactivate") {
-      updated.status = "expired";
-      updated.planExpiry = new Date().toISOString().split("T")[0];
-    } else if (action === "block") {
-      updated.status = "blocked";
-      updated.plan = null;
-      updated.planExpiry = null;
+  const apply = async () => {
+    setSaving(true);
+    try {
+      let updates: Partial<AdminUser> = {};
+      if (action === "activate" || action === "upgrade" || action === "downgrade") {
+        const now = new Date();
+        if (plan === "1 Day") now.setDate(now.getDate() + 1);
+        else if (plan === "1 Week") now.setDate(now.getDate() + 7);
+        else now.setMonth(now.getMonth() + 1);
+        updates = { plan, status: "active", planExpiry: now.toISOString().split("T")[0] };
+      } else if (action === "deactivate") {
+        updates = { status: "expired", planExpiry: new Date().toISOString().split("T")[0] };
+      } else if (action === "block") {
+        updates = { status: "blocked", plan: null, planExpiry: null };
+      }
+      await updateDoc(doc(db, "userProfiles", user.id), updates);
+
+      if (action === "activate" || action === "upgrade") {
+        await addDoc(collection(db, "activities"), {
+          username: user.displayName,
+          phone: user.phone,
+          action: `Admin ${action}d subscription — ${plan}`,
+          time: new Date().toLocaleString(),
+          timestamp: Date.now(),
+          createdAt: serverTimestamp(),
+        });
+      }
+      onClose();
+    } finally {
+      setSaving(false);
     }
-    onSave(updated);
-    onClose();
   };
 
   return (
     <div className="fixed inset-0 z-[500] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.75)" }}>
       <div className="w-full max-w-sm rounded-2xl p-6 shadow-2xl" style={{ background: "#13151a", border: "1px solid rgba(255,255,255,0.1)" }}>
         <h3 className="text-white font-bold text-sm mb-1">Manage User</h3>
-        <p className="text-white/50 text-xs mb-5">{user.name} · {user.phone}</p>
-
+        <p className="text-white/50 text-xs mb-5">{user.displayName} · {user.phone || user.email}</p>
         <div className="mb-4">
           <label className="text-white/50 text-[11px] block mb-2">Action</label>
           <div className="grid grid-cols-2 gap-2">
@@ -261,7 +258,6 @@ function ManageUserModal({ user, onSave, onClose }: { user: AdminUser; onSave: (
             ))}
           </div>
         </div>
-
         {(action === "activate" || action === "upgrade" || action === "downgrade") && (
           <div className="mb-5">
             <label className="text-white/50 text-[11px] block mb-2">Plan</label>
@@ -270,10 +266,11 @@ function ManageUserModal({ user, onSave, onClose }: { user: AdminUser; onSave: (
             </select>
           </div>
         )}
-
         <div className="flex gap-3 mt-4">
           <button onClick={onClose} className="flex-1 h-9 rounded-lg text-xs text-white/70 border border-white/20 hover:border-white/40 transition-colors">Cancel</button>
-          <button onClick={apply} className="flex-1 h-9 rounded-lg text-xs text-white font-bold hover:opacity-90 transition-opacity" style={{ background: action === "block" ? "linear-gradient(90deg,#ef4444,#dc2626)" : "linear-gradient(90deg,#a855f7,#ec4899)" }}>Apply</button>
+          <button onClick={apply} disabled={saving} className="flex-1 h-9 rounded-lg text-xs text-white font-bold hover:opacity-90 transition-opacity disabled:opacity-50" style={{ background: action === "block" ? "linear-gradient(90deg,#ef4444,#dc2626)" : "linear-gradient(90deg,#a855f7,#ec4899)" }}>
+            {saving ? "Saving..." : "Apply"}
+          </button>
         </div>
       </div>
     </div>
@@ -281,67 +278,101 @@ function ManageUserModal({ user, onSave, onClose }: { user: AdminUser; onSave: (
 }
 
 export function AdminDashboard({ onBack }: { onBack: () => void }) {
+  const { profile } = useAuth();
   const [section, setSection] = useState<Section>("movies");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const [movies, setMovies] = useState<AdminMovie[]>(initMovies);
-  const [series, setSeries] = useState<AdminSeries[]>(initSeries);
-  const [episodes, setEpisodes] = useState<AdminEpisode[]>(initEpisodes);
-  const [users, setUsers] = useState<AdminUser[]>(initUsers);
-  const activities = [...initActivities].sort((a,b) => b.timestamp - a.timestamp);
-  const transactions = initTransactions;
+  const [movies, setMovies] = useState<AdminMovie[]>([]);
+  const [series, setSeries] = useState<AdminSeries[]>([]);
+  const [episodes, setEpisodes] = useState<AdminEpisode[]>([]);
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [transactions, setTransactions] = useState<AdminTransaction[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [editMovie, setEditMovie] = useState<AdminMovie | null>(null);
   const [editSeries, setEditSeries] = useState<AdminSeries | null>(null);
   const [editEpisode, setEditEpisode] = useState<AdminEpisode | null>(null);
   const [manageUser, setManageUser] = useState<AdminUser | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<{ type: string; id: number } | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ type: string; id: string } | null>(null);
 
   const [movieSearch, setMovieSearch] = useState("");
   const [seriesSearch, setSeriesSearch] = useState("");
   const [userSearch, setUserSearch] = useState("");
   const [activitySearch, setActivitySearch] = useState("");
 
-  const handleDelete = () => {
+  useEffect(() => {
+    const unsubs: (() => void)[] = [];
+
+    unsubs.push(onSnapshot(query(collection(db, "movies"), orderBy("createdAt", "desc")), snap => {
+      setMovies(snap.docs.map(d => ({ id: d.id, ...d.data() } as AdminMovie)));
+      setLoading(false);
+    }));
+    unsubs.push(onSnapshot(query(collection(db, "series"), orderBy("createdAt", "desc")), snap => {
+      setSeries(snap.docs.map(d => ({ id: d.id, ...d.data() } as AdminSeries)));
+    }));
+    unsubs.push(onSnapshot(query(collection(db, "episodes"), orderBy("createdAt", "desc")), snap => {
+      setEpisodes(snap.docs.map(d => ({ id: d.id, ...d.data() } as AdminEpisode)));
+    }));
+    unsubs.push(onSnapshot(collection(db, "userProfiles"), snap => {
+      setUsers(snap.docs.map(d => ({ id: d.id, ...d.data() } as AdminUser)));
+    }));
+    unsubs.push(onSnapshot(query(collection(db, "activities"), orderBy("timestamp", "desc")), snap => {
+      setActivities(snap.docs.map(d => ({ id: d.id, ...d.data() } as Activity)));
+    }));
+    unsubs.push(onSnapshot(query(collection(db, "transactions"), orderBy("createdAt", "desc")), snap => {
+      setTransactions(snap.docs.map(d => ({ id: d.id, ...d.data() } as AdminTransaction)));
+    }));
+
+    return () => unsubs.forEach(u => u());
+  }, []);
+
+  const handleDelete = async () => {
     if (!confirmDelete) return;
-    if (confirmDelete.type === "movie") setMovies(m => m.filter(x => x.id !== confirmDelete.id));
-    if (confirmDelete.type === "series") setSeries(s => s.filter(x => x.id !== confirmDelete.id));
-    if (confirmDelete.type === "episode") setEpisodes(e => e.filter(x => x.id !== confirmDelete.id));
+    const colMap: Record<string, string> = { movie: "movies", series: "series", episode: "episodes" };
+    const col = colMap[confirmDelete.type];
+    if (col) await deleteDoc(doc(db, col, confirmDelete.id));
     setConfirmDelete(null);
   };
 
-  const filteredMovies = movies.filter(m => m.title.toLowerCase().includes(movieSearch.toLowerCase()) || m.category.toLowerCase().includes(movieSearch.toLowerCase()));
-  const filteredSeries = series.filter(s => s.title.toLowerCase().includes(seriesSearch.toLowerCase()) || s.category.toLowerCase().includes(seriesSearch.toLowerCase()));
-  const filteredUsers = users.filter(u => u.name.toLowerCase().includes(userSearch.toLowerCase()) || u.email.toLowerCase().includes(userSearch.toLowerCase()) || u.phone.includes(userSearch));
-  const filteredActivities = activities.filter(a => a.username.toLowerCase().includes(activitySearch.toLowerCase()) || a.action.toLowerCase().includes(activitySearch.toLowerCase()) || a.phone.includes(activitySearch));
+  const filteredMovies = movies.filter(m => m.title?.toLowerCase().includes(movieSearch.toLowerCase()) || m.category?.toLowerCase().includes(movieSearch.toLowerCase()));
+  const filteredSeries = series.filter(s => s.title?.toLowerCase().includes(seriesSearch.toLowerCase()) || s.category?.toLowerCase().includes(seriesSearch.toLowerCase()));
+  const filteredUsers = users.filter(u => u.displayName?.toLowerCase().includes(userSearch.toLowerCase()) || u.email?.toLowerCase().includes(userSearch.toLowerCase()) || u.phone?.includes(userSearch));
+  const filteredActivities = activities.filter(a => a.username?.toLowerCase().includes(activitySearch.toLowerCase()) || a.action?.toLowerCase().includes(activitySearch.toLowerCase()) || a.phone?.includes(activitySearch));
+
+  const totalRevenue = transactions.filter(t => t.status === "completed" && t.type === "subscription").reduce((s, t) => s + t.amount, 0);
+  const walletBalance = totalRevenue - transactions.filter(t => t.status === "completed" && t.type === "withdrawal").reduce((s, t) => s + t.amount, 0);
 
   const tableHead = "text-white/40 text-[11px] font-semibold uppercase tracking-wide py-2.5 px-3 text-left border-b border-white/5";
   const tableCell = "py-2.5 px-3 text-xs text-white/80 border-b border-white/5";
-  const searchInput = (val: string, set: (v:string)=>void, ph: string) => (
-    <input value={val} onChange={e=>set(e.target.value)} placeholder={ph} className="w-full max-w-xs h-8 px-3 rounded-lg text-xs text-white/80 outline-none border border-white/10 focus:border-purple-500/40 placeholder:text-white/25" style={{ background: "rgba(255,255,255,0.05)" }} />
+
+  const searchInput = (val: string, set: (v: string) => void, ph: string) => (
+    <input value={val} onChange={e => set(e.target.value)} placeholder={ph} className="w-full max-w-xs h-8 px-3 rounded-lg text-xs text-white/80 outline-none border border-white/10 focus:border-purple-500/40 placeholder:text-white/25" style={{ background: "rgba(255,255,255,0.05)" }} />
   );
 
-  const iconBtn = (label: string, color: string, onClick: ()=>void) => (
+  const iconBtn = (label: string, color: string, onClick: () => void) => (
     <button onClick={onClick} title={label} className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors hover:opacity-90" style={{ background: color, color: "white" }}>{label}</button>
   );
 
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center" style={{ background: "#0d0f12" }}>
+        <div className="text-white/40 text-sm">Loading admin data...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: "#0d0f12", color: "white" }}>
-      {/* Modals */}
       {editMovie && <EditMovieModal movie={editMovie} onSave={m => setMovies(ms => ms.map(x => x.id === m.id ? m : x))} onClose={() => setEditMovie(null)} />}
       {editSeries && <EditSeriesModal series={editSeries} onSave={s => setSeries(ss => ss.map(x => x.id === s.id ? s : x))} onClose={() => setEditSeries(null)} />}
       {editEpisode && <EditEpisodeModal episode={editEpisode} onSave={e => setEpisodes(es => es.map(x => x.id === e.id ? e : x))} onClose={() => setEditEpisode(null)} />}
-      {manageUser && <ManageUserModal user={manageUser} onSave={u => setUsers(us => us.map(x => x.id === u.id ? u : x))} onClose={() => setManageUser(null)} />}
+      {manageUser && <ManageUserModal user={manageUser} onClose={() => setManageUser(null)} />}
       {confirmDelete && <ConfirmModal message={`Delete this ${confirmDelete.type}? This cannot be undone.`} onConfirm={handleDelete} onCancel={() => setConfirmDelete(null)} />}
 
-      {/* Mobile sidebar overlay */}
       {sidebarOpen && <div className="fixed inset-0 z-30 bg-black/60 md:hidden" onClick={() => setSidebarOpen(false)} />}
 
-      {/* Sidebar */}
-      <aside
-        className={`fixed md:static top-0 left-0 h-full z-40 flex flex-col transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
-        style={{ width: 200, background: "#13151a", borderRight: "1px solid rgba(255,255,255,0.07)", flexShrink: 0 }}
-      >
+      <aside className={`fixed md:static top-0 left-0 h-full z-40 flex flex-col transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`} style={{ width: 200, background: "#13151a", borderRight: "1px solid rgba(255,255,255,0.07)", flexShrink: 0 }}>
         <div className="flex items-center justify-between px-4 h-14 border-b" style={{ borderColor: "rgba(255,255,255,0.07)" }}>
           <div>
             <div className="text-white font-bold text-xs leading-tight">Admin Dashboard</div>
@@ -351,35 +382,25 @@ export function AdminDashboard({ onBack }: { onBack: () => void }) {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
           </button>
         </div>
-
         <nav className="flex-1 overflow-y-auto py-3 px-2">
           {SIDEBAR_ITEMS.map(item => (
-            <button
-              key={item.id}
-              onClick={() => { setSection(item.id); setSidebarOpen(false); }}
+            <button key={item.id} onClick={() => { setSection(item.id); setSidebarOpen(false); }}
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg mb-0.5 text-left transition-all"
-              style={{ background: section === item.id ? "rgba(168,85,247,0.12)" : "transparent", color: section === item.id ? "#a855f7" : "rgba(255,255,255,0.55)" }}
-            >
+              style={{ background: section === item.id ? "rgba(168,85,247,0.12)" : "transparent", color: section === item.id ? "#a855f7" : "rgba(255,255,255,0.55)" }}>
               <span style={{ color: section === item.id ? "#a855f7" : "rgba(255,255,255,0.4)" }}>{item.icon}</span>
               <span className="text-xs font-medium">{item.label}</span>
             </button>
           ))}
         </nav>
-
         <div className="px-2 pb-4">
-          <button
-            onClick={onBack}
-            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs text-white/50 hover:text-white hover:bg-white/5 transition-all"
-          >
+          <button onClick={onBack} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs text-white/50 hover:text-white hover:bg-white/5 transition-all">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M15 18l-6-6 6-6"/></svg>
             Exit to Site
           </button>
         </div>
       </aside>
 
-      {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Top bar */}
         <div className="flex items-center gap-3 px-4 h-14 border-b flex-shrink-0" style={{ borderColor: "rgba(255,255,255,0.07)", background: "#13151a" }}>
           <button onClick={() => setSidebarOpen(true)} className="md:hidden text-white/50 hover:text-white mr-1">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
@@ -391,13 +412,14 @@ export function AdminDashboard({ onBack }: { onBack: () => void }) {
             <span className="text-white font-bold text-sm capitalize">{section}</span>
           </div>
           <div className="flex-1" />
-          <span className="text-white/30 text-xs hidden md:inline">True Light · Admin</span>
+          <div className="flex items-center gap-2">
+            {profile?.photoURL && <img src={profile.photoURL} alt="" className="w-6 h-6 rounded-full object-cover" />}
+            <span className="text-white/50 text-xs hidden md:inline">{profile?.displayName || "Admin"} · Admin</span>
+          </div>
         </div>
 
-        {/* Content area */}
         <div className="flex-1 overflow-y-auto p-4 md:p-6">
 
-          {/* ── MOVIES ── */}
           {section === "movies" && (
             <div>
               <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
@@ -426,8 +448,8 @@ export function AdminDashboard({ onBack }: { onBack: () => void }) {
                           <td className={tableCell + " font-medium text-white"}>{m.title}</td>
                           <td className={tableCell}><span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-500/15 text-purple-400">{m.category}</span></td>
                           <td className={tableCell}>{m.year}</td>
-                          <td className={tableCell}>{m.views.toLocaleString()}</td>
-                          <td className={tableCell + " text-white/50"}>{m.vjName}</td>
+                          <td className={tableCell}>{(m.views || 0).toLocaleString()}</td>
+                          <td className={tableCell + " text-white/50"}>{m.vjName || "—"}</td>
                           <td className={tableCell}>{m.popular ? <span className="text-green-400 text-[10px] font-bold">YES</span> : <span className="text-white/25 text-[10px]">no</span>}</td>
                           <td className={tableCell}>
                             <div className="flex gap-1.5">
@@ -445,7 +467,6 @@ export function AdminDashboard({ onBack }: { onBack: () => void }) {
             </div>
           )}
 
-          {/* ── SERIES ── */}
           {section === "series" && (
             <div>
               <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
@@ -476,7 +497,7 @@ export function AdminDashboard({ onBack }: { onBack: () => void }) {
                           <td className={tableCell}>{s.year}</td>
                           <td className={tableCell}>{s.seasons}</td>
                           <td className={tableCell}>{s.episodes}</td>
-                          <td className={tableCell + " text-white/50"}>{s.vjName}</td>
+                          <td className={tableCell + " text-white/50"}>{s.vjName || "—"}</td>
                           <td className={tableCell}>
                             <div className="flex gap-1.5">
                               {iconBtn("Edit", "rgba(168,85,247,0.5)", () => setEditSeries(s))}
@@ -493,7 +514,6 @@ export function AdminDashboard({ onBack }: { onBack: () => void }) {
             </div>
           )}
 
-          {/* ── EPISODES ── */}
           {section === "episodes" && (
             <div>
               <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
@@ -517,7 +537,7 @@ export function AdminDashboard({ onBack }: { onBack: () => void }) {
                       {episodes.map((e, i) => (
                         <tr key={e.id} style={{ background: i % 2 === 0 ? "rgba(255,255,255,0.01)" : "transparent" }}>
                           <td className={tableCell + " text-white/30"}>{i+1}</td>
-                          <td className={tableCell + " text-white/70"}>{e.seriesTitle}</td>
+                          <td className={tableCell + " text-white/70"}>{e.seriesTitle || series.find(s => s.id === e.seriesId)?.title || "—"}</td>
                           <td className={tableCell}>{e.season}</td>
                           <td className={tableCell}>{e.episode}</td>
                           <td className={tableCell + " font-medium text-white"}>{e.title}</td>
@@ -538,15 +558,12 @@ export function AdminDashboard({ onBack }: { onBack: () => void }) {
             </div>
           )}
 
-          {/* ── USERS ── */}
           {section === "users" && (
             <div>
               <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
                 <h2 className="text-white font-bold text-base">All Users ({users.length})</h2>
                 {searchInput(userSearch, setUserSearch, "Search by name, email, phone...")}
               </div>
-
-              {/* Stats row */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
                 {[
                   { label:"Total Users", val: users.length, color:"#a855f7" },
@@ -560,7 +577,6 @@ export function AdminDashboard({ onBack }: { onBack: () => void }) {
                   </div>
                 ))}
               </div>
-
               <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.07)" }}>
                 <div className="overflow-x-auto">
                   <table className="w-full" style={{ minWidth: 780 }}>
@@ -581,10 +597,10 @@ export function AdminDashboard({ onBack }: { onBack: () => void }) {
                         <tr key={u.id} style={{ background: i % 2 === 0 ? "rgba(255,255,255,0.01)" : "transparent" }}>
                           <td className={tableCell + " text-white/30"}>{i+1}</td>
                           <td className={tableCell}>
-                            <div className="font-medium text-white">{u.name}</div>
+                            <div className="font-medium text-white">{u.displayName}</div>
                             <div className="text-white/35 text-[10px]">{u.email}</div>
                           </td>
-                          <td className={tableCell + " text-white/60"}>{u.phone}</td>
+                          <td className={tableCell + " text-white/60"}>{u.phone || "—"}</td>
                           <td className={tableCell + " text-white/50"}>{u.joined}</td>
                           <td className={tableCell}>{u.plan ? <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-500/15 text-purple-400">{u.plan}</span> : <span className="text-white/25 text-[10px]">—</span>}</td>
                           <td className={tableCell + " text-white/50"}>{u.planExpiry || "—"}</td>
@@ -600,7 +616,6 @@ export function AdminDashboard({ onBack }: { onBack: () => void }) {
             </div>
           )}
 
-          {/* ── ACTIVITIES ── */}
           {section === "activities" && (
             <div>
               <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
@@ -626,30 +641,26 @@ export function AdminDashboard({ onBack }: { onBack: () => void }) {
                           <td className={tableCell + " text-white/30"}>{i+1}</td>
                           <td className={tableCell}>
                             <div className="flex items-center gap-2">
-                              <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0" style={{ background: "linear-gradient(135deg,#a855f7,#ec4899)" }}>{a.username.charAt(0)}</div>
+                              <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0" style={{ background: "linear-gradient(135deg,#a855f7,#ec4899)" }}>{a.username?.charAt(0)}</div>
                               <span className="font-medium text-white text-xs">{a.username}</span>
                             </div>
                           </td>
                           <td className={tableCell + " text-white/55"}>{a.phone}</td>
-                          <td className={tableCell}>
-                            <span className="text-white/80">{a.action}</span>
-                          </td>
+                          <td className={tableCell}><span className="text-white/80">{a.action}</span></td>
                           <td className={tableCell + " text-white/40 whitespace-nowrap"}>{a.time}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
-                {filteredActivities.length === 0 && <div className="py-10 text-center text-white/30 text-sm">No activities found</div>}
+                {filteredActivities.length === 0 && <div className="py-10 text-center text-white/30 text-sm">No activities recorded yet</div>}
               </div>
             </div>
           )}
 
-          {/* ── WALLET ── */}
           {section === "wallet" && (
             <div>
               <h2 className="text-white font-bold text-base mb-5">Wallet — Read Only</h2>
-
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 {[
                   { label:"Current Balance", val: fmt(walletBalance), color:"#a855f7" },
@@ -662,7 +673,6 @@ export function AdminDashboard({ onBack }: { onBack: () => void }) {
                   </div>
                 ))}
               </div>
-
               <div className="rounded-xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.07)" }}>
                 <div className="px-4 py-3 border-b" style={{ background: "#1a1d24", borderColor: "rgba(255,255,255,0.07)" }}>
                   <span className="text-white font-semibold text-sm">Transaction History</span>
@@ -685,7 +695,7 @@ export function AdminDashboard({ onBack }: { onBack: () => void }) {
                           <td className={tableCell + " text-white/30"}>{i+1}</td>
                           <td className={tableCell + " font-medium text-white"}>{t.description}</td>
                           <td className={tableCell + " text-white/55"}>{t.phone || "—"}</td>
-                          <td className={tableCell}><span className="text-green-400 font-semibold">+{fmt(t.amount)}</span></td>
+                          <td className={tableCell}><span className={t.type === "withdrawal" ? "text-red-400 font-semibold" : "text-green-400 font-semibold"}>{t.type === "withdrawal" ? "-" : "+"}{fmt(t.amount)}</span></td>
                           <td className={tableCell + " text-white/50"}>{t.date}</td>
                           <td className={tableCell}><span className={statusBadge(t.status)}>{t.status}</span></td>
                         </tr>
@@ -693,6 +703,7 @@ export function AdminDashboard({ onBack }: { onBack: () => void }) {
                     </tbody>
                   </table>
                 </div>
+                {transactions.length === 0 && <div className="py-10 text-center text-white/30 text-sm">No transactions found</div>}
               </div>
             </div>
           )}
