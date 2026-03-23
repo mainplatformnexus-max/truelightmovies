@@ -92,13 +92,12 @@ export function Sidebar({ isOpen, onClose, activeNav, onNavChange }: SidebarProp
         }`}
       >
         {/* Logo */}
-        <div className="px-3 mb-8 mt-1">
+        <div className="px-4 mb-6 mt-1">
           <a href="/" className="flex items-center justify-center">
             <img
               src={vjemmaLogo}
               alt="VJ Emma True Light Film"
-              className="w-full"
-              style={{ maxWidth: 160, height: "auto" }}
+              style={{ width: 90, height: "auto" }}
             />
           </a>
         </div>

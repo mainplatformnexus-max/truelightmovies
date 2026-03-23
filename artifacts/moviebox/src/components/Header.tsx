@@ -22,6 +22,7 @@ const BENEFITS = [
 
 function LoginModal({ onClose, onSwitchToSubscribe }: { onClose: () => void; onSwitchToSubscribe: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
+  const [view, setView] = useState<"login" | "signup">("login");
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -31,87 +32,166 @@ function LoginModal({ onClose, onSwitchToSubscribe }: { onClose: () => void; onS
     return () => document.removeEventListener("mousedown", handleClick);
   }, [onClose]);
 
+  const inputStyle = {
+    background: "rgba(255,255,255,0.06)",
+    borderColor: "rgba(255,255,255,0.1)",
+  };
+  const focusInput = (e: React.FocusEvent<HTMLInputElement>) =>
+    (e.target.style.borderColor = "rgba(168,85,247,0.6)");
+  const blurInput = (e: React.FocusEvent<HTMLInputElement>) =>
+    (e.target.style.borderColor = "rgba(255,255,255,0.1)");
+
   return (
-    <div className="fixed inset-0 z-[200] flex items-start justify-end pt-12 pr-4 md:pr-6">
+    <div className="fixed inset-0 z-[200] flex items-start justify-end pt-11 pr-3 md:pr-5">
       <div
         ref={ref}
-        className="w-80 rounded-2xl shadow-2xl overflow-hidden"
+        className="w-72 rounded-xl shadow-2xl overflow-hidden"
         style={{ background: "#13151a", border: "1px solid rgba(255,255,255,0.1)" }}
       >
         {/* Header */}
         <div
-          className="px-5 py-4 flex items-center justify-between"
+          className="px-4 py-3 flex items-center justify-between"
           style={{ background: "linear-gradient(135deg,rgba(168,85,247,0.15),rgba(236,72,153,0.15))", borderBottom: "1px solid rgba(255,255,255,0.07)" }}
         >
           <div className="flex items-center gap-2">
             <div
-              className="w-8 h-8 rounded-full flex items-center justify-center"
+              className="w-6 h-6 rounded-full flex items-center justify-center"
               style={{ background: "linear-gradient(135deg,#a855f7,#ec4899)" }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="white">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                 <circle cx="12" cy="7" r="4"/>
               </svg>
             </div>
-            <span className="text-white font-bold text-sm">Welcome back</span>
+            <span className="text-white font-bold text-xs">
+              {view === "login" ? "Welcome back" : "Create account"}
+            </span>
           </div>
           <button onClick={onClose} className="text-white/40 hover:text-white/80 transition-colors">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
               <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
             </svg>
           </button>
         </div>
 
         {/* Body */}
-        <div className="p-5">
-          <div className="mb-4">
-            <label className="block text-white/50 text-xs mb-1.5 font-medium">Email or Username</label>
-            <input
-              type="text"
-              placeholder="Enter your email..."
-              className="w-full h-10 px-3 rounded-lg text-sm text-white placeholder-white/30 outline-none border transition-colors"
-              style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.1)" }}
-              onFocus={(e) => (e.target.style.borderColor = "rgba(168,85,247,0.6)")}
-              onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.1)")}
-            />
-          </div>
-          <div className="mb-5">
-            <label className="block text-white/50 text-xs mb-1.5 font-medium">Password</label>
-            <input
-              type="password"
-              placeholder="Enter your password..."
-              className="w-full h-10 px-3 rounded-lg text-sm text-white placeholder-white/30 outline-none border transition-colors"
-              style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.1)" }}
-              onFocus={(e) => (e.target.style.borderColor = "rgba(168,85,247,0.6)")}
-              onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.1)")}
-            />
-            <div className="flex justify-end mt-1.5">
-              <a href="#" className="text-[11px] text-purple-400 hover:text-purple-300 transition-colors">Forgot password?</a>
-            </div>
-          </div>
-
-          <button
-            className="w-full h-10 rounded-xl font-bold text-sm text-white mb-3 hover:opacity-90 transition-opacity"
-            style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}
-          >
-            Log In
-          </button>
-
-          <div className="flex items-center gap-2 mb-3">
-            <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.08)" }} />
-            <span className="text-white/30 text-xs">or</span>
-            <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.08)" }} />
-          </div>
-
-          <p className="text-center text-white/40 text-xs">
-            Don't have an account?{" "}
-            <button
-              onClick={() => { onClose(); onSwitchToSubscribe(); }}
-              className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
-            >
-              Subscribe now
-            </button>
-          </p>
+        <div className="p-4">
+          {view === "login" ? (
+            <>
+              <div className="mb-3">
+                <label className="block text-white/50 text-[11px] mb-1 font-medium">Email or Username</label>
+                <input
+                  type="text"
+                  placeholder="Enter your email..."
+                  className="w-full h-9 px-3 rounded-lg text-xs text-white placeholder-white/30 outline-none border transition-colors"
+                  style={inputStyle}
+                  onFocus={focusInput}
+                  onBlur={blurInput}
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-white/50 text-[11px] mb-1 font-medium">Password</label>
+                <input
+                  type="password"
+                  placeholder="Enter your password..."
+                  className="w-full h-9 px-3 rounded-lg text-xs text-white placeholder-white/30 outline-none border transition-colors"
+                  style={inputStyle}
+                  onFocus={focusInput}
+                  onBlur={blurInput}
+                />
+                <div className="flex justify-end mt-1">
+                  <a href="#" className="text-[10px] text-purple-400 hover:text-purple-300 transition-colors">Forgot password?</a>
+                </div>
+              </div>
+              <button
+                className="w-full h-9 rounded-lg font-bold text-xs text-white mb-3 hover:opacity-90 transition-opacity"
+                style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}
+              >
+                Log In
+              </button>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.08)" }} />
+                <span className="text-white/30 text-[10px]">or</span>
+                <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.08)" }} />
+              </div>
+              <p className="text-center text-white/40 text-[11px]">
+                Don't have an account?{" "}
+                <button
+                  onClick={() => setView("signup")}
+                  className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
+                >
+                  Sign up
+                </button>
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="mb-2.5">
+                <label className="block text-white/50 text-[11px] mb-1 font-medium">Full Name</label>
+                <input
+                  type="text"
+                  placeholder="Enter your name..."
+                  className="w-full h-9 px-3 rounded-lg text-xs text-white placeholder-white/30 outline-none border transition-colors"
+                  style={inputStyle}
+                  onFocus={focusInput}
+                  onBlur={blurInput}
+                />
+              </div>
+              <div className="mb-2.5">
+                <label className="block text-white/50 text-[11px] mb-1 font-medium">Email</label>
+                <input
+                  type="email"
+                  placeholder="Enter your email..."
+                  className="w-full h-9 px-3 rounded-lg text-xs text-white placeholder-white/30 outline-none border transition-colors"
+                  style={inputStyle}
+                  onFocus={focusInput}
+                  onBlur={blurInput}
+                />
+              </div>
+              <div className="mb-2.5">
+                <label className="block text-white/50 text-[11px] mb-1 font-medium">Password</label>
+                <input
+                  type="password"
+                  placeholder="Create a password..."
+                  className="w-full h-9 px-3 rounded-lg text-xs text-white placeholder-white/30 outline-none border transition-colors"
+                  style={inputStyle}
+                  onFocus={focusInput}
+                  onBlur={blurInput}
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-white/50 text-[11px] mb-1 font-medium">Confirm Password</label>
+                <input
+                  type="password"
+                  placeholder="Confirm your password..."
+                  className="w-full h-9 px-3 rounded-lg text-xs text-white placeholder-white/30 outline-none border transition-colors"
+                  style={inputStyle}
+                  onFocus={focusInput}
+                  onBlur={blurInput}
+                />
+              </div>
+              <button
+                className="w-full h-9 rounded-lg font-bold text-xs text-white mb-3 hover:opacity-90 transition-opacity"
+                style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}
+              >
+                Create Account
+              </button>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.08)" }} />
+                <span className="text-white/30 text-[10px]">or</span>
+                <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.08)" }} />
+              </div>
+              <p className="text-center text-white/40 text-[11px]">
+                Already have an account?{" "}
+                <button
+                  onClick={() => setView("login")}
+                  className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
+                >
+                  Log in
+                </button>
+              </p>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -132,26 +212,26 @@ function SubscribeModal({ onClose, isMobile }: { onClose: () => void; isMobile: 
       >
         <div
           className="w-full rounded-t-2xl overflow-hidden"
-          style={{ background: "#13151a", maxHeight: "92vh" }}
+          style={{ background: "#13151a" }}
         >
           {/* Top bar */}
-          <div className="flex items-center justify-between px-4 pt-3 pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-            <span className="text-white font-bold text-sm">VIP Subscription</span>
+          <div className="flex items-center justify-between px-4 pt-2.5 pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+            <span className="text-white font-bold text-xs">VIP Subscription</span>
             <button onClick={onClose} className="text-white/40 hover:text-white/70 transition-colors p-1">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
                 <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
               </svg>
             </button>
           </div>
 
-          <div className="px-4 pt-3 pb-4">
+          <div className="px-3 pt-2.5 pb-3">
             {/* Plan pills */}
-            <div className="flex gap-2 mb-3">
+            <div className="flex gap-1.5 mb-2">
               {PLANS.map((p, i) => (
                 <button
                   key={p.id}
                   onClick={() => setSelectedPlan(i)}
-                  className="relative flex-1 rounded-xl py-2.5 px-1 text-center transition-all border"
+                  className="relative flex-1 rounded-lg py-2 px-1 text-center transition-all border"
                   style={{
                     background: i === selectedPlan ? "rgba(168,85,247,0.12)" : "rgba(255,255,255,0.04)",
                     borderColor: i === selectedPlan ? "rgba(168,85,247,0.6)" : "rgba(255,255,255,0.08)",
@@ -159,61 +239,61 @@ function SubscribeModal({ onClose, isMobile }: { onClose: () => void; isMobile: 
                 >
                   {p.discount > 0 && (
                     <div
-                      className="absolute -top-2 left-1/2 -translate-x-1/2 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap"
+                      className="absolute -top-1.5 left-1/2 -translate-x-1/2 text-white text-[8px] font-bold px-1 py-px rounded-full whitespace-nowrap"
                       style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}
                     >
                       {p.discount}% off
                     </div>
                   )}
-                  <div className="text-white/60 text-[10px] mt-1 leading-tight">{p.label}</div>
+                  <div className="text-white/60 text-[9px] mt-0.5 leading-tight">{p.label}</div>
                   <div
-                    className="text-lg font-bold leading-tight"
+                    className="text-base font-bold leading-tight"
                     style={{ color: i === selectedPlan ? "#a855f7" : "white" }}
                   >
                     ${p.price.toFixed(2)}
                   </div>
-                  <div className="text-white/30 text-[10px] line-through">${p.original.toFixed(2)}</div>
+                  <div className="text-white/30 text-[9px] line-through">${p.original.toFixed(2)}</div>
                 </button>
               ))}
             </div>
 
-            <p className="text-white/40 text-[11px] mb-3">· New subscribers get {plan.discount}% off the first term!</p>
+            <p className="text-white/40 text-[10px] mb-2">· New subscribers get {plan.discount}% off the first term!</p>
 
             {/* Price + savings row */}
-            <div className="flex items-center justify-between mb-3 p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.04)" }}>
+            <div className="flex items-center justify-between mb-2 px-3 py-2 rounded-lg" style={{ background: "rgba(255,255,255,0.04)" }}>
               <div>
-                <div className="text-white/50 text-xs mb-0.5">You pay</div>
-                <div className="text-white text-2xl font-bold">${plan.price.toFixed(2)}</div>
+                <div className="text-white/50 text-[10px]">You pay</div>
+                <div className="text-white text-xl font-bold leading-tight">${plan.price.toFixed(2)}</div>
               </div>
               <div
-                className="text-white text-xs font-semibold px-3 py-1.5 rounded-full"
+                className="text-white text-[10px] font-semibold px-2.5 py-1 rounded-full"
                 style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}
               >
                 Save ${saved}
               </div>
             </div>
 
-            {/* Benefits — 2-column compact */}
-            <div className="grid grid-cols-2 gap-1.5 mb-4">
+            {/* Benefits — 3-column ultra compact */}
+            <div className="grid grid-cols-3 gap-1 mb-3">
               {BENEFITS.map((b) => (
-                <div key={b.title} className="flex items-center gap-1.5 rounded-lg px-2 py-1.5" style={{ background: "rgba(255,255,255,0.04)" }}>
-                  <span className="text-sm">{b.icon}</span>
-                  <span className="text-white/70 text-[11px] font-medium leading-tight">{b.title}</span>
+                <div key={b.title} className="flex items-center gap-1 rounded-md px-1.5 py-1" style={{ background: "rgba(255,255,255,0.04)" }}>
+                  <span className="text-xs leading-none">{b.icon}</span>
+                  <span className="text-white/70 text-[9px] font-medium leading-tight">{b.title}</span>
                 </div>
               ))}
             </div>
 
             {/* Pay button */}
             <button
-              className="w-full h-12 rounded-xl font-bold text-base text-white hover:opacity-90 transition-opacity"
+              className="w-full h-10 rounded-xl font-bold text-sm text-white hover:opacity-90 transition-opacity"
               style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}
             >
               Subscribe · Pay ${plan.price.toFixed(2)}
             </button>
 
-            <div className="flex justify-center gap-3 mt-2">
-              <a href="#" className="text-white/25 text-[10px] hover:text-white/50 transition-colors">VIP Terms</a>
-              <a href="#" className="text-white/25 text-[10px] hover:text-white/50 transition-colors">Privacy Policy</a>
+            <div className="flex justify-center gap-3 mt-1.5">
+              <a href="#" className="text-white/25 text-[9px] hover:text-white/50 transition-colors">VIP Terms</a>
+              <a href="#" className="text-white/25 text-[9px] hover:text-white/50 transition-colors">Privacy Policy</a>
             </div>
           </div>
         </div>
