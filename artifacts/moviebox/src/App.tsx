@@ -9,15 +9,14 @@ import { SeriesPage } from "./pages/SeriesPage";
 import { PlayPage } from "./pages/PlayPage";
 import { VJDashboard } from "./pages/VJDashboard";
 import { AdminDashboard } from "./pages/AdminDashboard";
-import type { Movie } from "./data/movies";
-import { featuredMovies } from "./data/movies";
+import type { ContentItem } from "./lib/types";
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeNav, setActiveNav] = useState("home");
-  const [selectedMovie, setSelectedMovie] = useState<Movie>(featuredMovies[0]);
+  const [selectedMovie, setSelectedMovie] = useState<ContentItem | null>(null);
 
-  const handlePlay = (movie: Movie) => {
+  const handlePlay = (movie: ContentItem) => {
     setSelectedMovie(movie);
     setActiveNav("play");
   };
@@ -34,7 +33,7 @@ function App() {
     return <AdminDashboard onBack={() => setActiveNav("home")} />;
   }
 
-  if (activeNav === "play") {
+  if (activeNav === "play" && selectedMovie) {
     return <PlayPage movie={selectedMovie} onBack={handleBack} />;
   }
 

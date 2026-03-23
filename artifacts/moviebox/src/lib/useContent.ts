@@ -23,8 +23,10 @@ export function useContent() {
       checkDone();
     });
 
-    const unsub3 = onSnapshot(query(collection(db, "episodes"), orderBy("season"), orderBy("episode")), snap => {
-      setEpisodes(snap.docs.map(d => ({ id: d.id, ...d.data() } as EpisodeItem)));
+    const unsub3 = onSnapshot(collection(db, "episodes"), snap => {
+      const eps = snap.docs.map(d => ({ id: d.id, ...d.data() } as EpisodeItem));
+      eps.sort((a, b) => a.season !== b.season ? a.season - b.season : a.episode - b.episode);
+      setEpisodes(eps);
       checkDone();
     });
 

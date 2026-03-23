@@ -1,30 +1,20 @@
 import { useState } from "react";
-import type { Movie } from "../data/movies";
-import { popularMovies, popularSeries } from "../data/movies";
+import type { ContentItem, EpisodeItem } from "../lib/types";
+import { useContent } from "../lib/useContent";
 
 interface PlayPageProps {
-  movie: Movie;
+  movie: ContentItem;
   onBack: () => void;
 }
 
-
-function generateEpisodes(count: number) {
-  const durations = [42, 45, 48, 51, 44, 46, 50, 43, 47, 52];
-  return Array.from({ length: count }, (_, i) => ({
-    ep: i + 1,
-    title: `Episode ${i + 1}`,
-    duration: `${durations[i % durations.length]}min`,
-  }));
-}
-
-function RelatedCard({ movie }: { movie: Movie }) {
+function RelatedCard({ movie, onPlay }: { movie: ContentItem; onPlay?: (m: ContentItem) => void }) {
   const [err, setErr] = useState(false);
   return (
-    <div className="cursor-pointer group">
+    <div className="cursor-pointer group" onClick={() => onPlay?.(movie)}>
       <div className="relative rounded-lg overflow-hidden bg-[#2b2e39]" style={{ aspectRatio: "2/3" }}>
-        {!err ? (
+        {!err && movie.thumbnail ? (
           <img
-            src={movie.poster}
+            src={movie.thumbnail}
             alt={movie.title}
             className="w-full h-full object-cover group-hover:opacity-80 transition-opacity"
             onError={() => setErr(true)}
@@ -36,12 +26,9 @@ function RelatedCard({ movie }: { movie: Movie }) {
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
         <div className="absolute bottom-1.5 left-1.5">
-          <div className="flex items-center gap-1">
-            <svg width="9" height="9" viewBox="0 0 24 24" fill="#facc15">
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-            </svg>
-            <span className="text-yellow-400 text-[9px] font-bold">{movie.rating}</span>
-          </div>
+          <span className="text-white/70 text-[9px] font-bold bg-black/40 px-1 rounded">
+            {movie.type === "series" ? "TV" : "HD"}
+          </span>
         </div>
       </div>
       <p className="text-white text-[10px] font-medium mt-1 line-clamp-2 leading-tight">{movie.title}</p>
@@ -50,6 +37,7 @@ function RelatedCard({ movie }: { movie: Movie }) {
 }
 
 export function PlayPage({ movie, onBack }: PlayPageProps) {
+  const { all, episodes: allEpisodes } = useContent();
   const [isPlaying, setIsPlaying] = useState(false);
   const [liked, setLiked] = useState(false);
   const [inList, setInList] = useState(false);
@@ -59,166 +47,162 @@ export function PlayPage({ movie, onBack }: PlayPageProps) {
   );
   const [selectedEp, setSelectedEp] = useState(1);
   const [backdropErr, setBackdropErr] = useState(false);
+  const [activeMovie, setActiveMovie] = useState<ContentItem>(movie);
 
-  const episodeCount = (movie.seasons ?? 1) * 10;
-  const episodes = generateEpisodes(episodeCount);
+  const seriesEpisodes: EpisodeItem[] = allEpisodes.filter(e => e.seriesId === activeMovie.id);
+  const episodeCount = seriesEpisodes.length > 0 ? seriesEpisodes.length : (activeMovie.seasons ?? 1) * 10;
+  const episodes = seriesEpisodes.length > 0
+    ? seriesEpisodes
+    : Array.from({ length: episodeCount }, (_, i) => ({
+        id: `ep-${i + 1}`,
+        seriesId: activeMovie.id,
+        title: `Episode ${i + 1}`,
+        season: 1,
+        episode: i + 1,
+        url: activeMovie.url,
+        duration: "45min",
+      } as EpisodeItem));
 
-  const related = movie.type === "series"
-    ? popularSeries.filter((m) => m.id !== movie.id).slice(0, 14)
-    : popularMovies.filter((m) => m.id !== movie.id).slice(0, 14);
+  const related = all.filter(m => m.id !== activeMovie.id && m.category === activeMovie.category).slice(0, 14);
+  const fallbackRelated = all.filter(m => m.id !== activeMovie.id).slice(0, 14);
+  const displayRelated = related.length > 0 ? related : fallbackRelated;
+
+  const currentEpUrl = seriesEpisodes.find(e => e.episode === selectedEp)?.url ?? activeMovie.url;
+
+  const handleRelatedPlay = (m: ContentItem) => {
+    setActiveMovie(m);
+    setBackdropErr(false);
+    setSelectedEp(1);
+    setActiveTab(m.type === "series" ? "episodes" : "related");
+  };
 
   return (
     <div className="fixed inset-0 z-[9999] bg-[#101114] text-white overflow-y-auto">
 
-      {/* ── VIDEO PLAYER ── */}
+      {/* VIDEO PLAYER */}
       <div className="relative w-full bg-black" style={{ aspectRatio: "16/9" }}>
-        {!backdropErr ? (
-          <img
-            src={movie.backdrop}
-            alt={movie.title}
-            className="w-full h-full object-cover opacity-40"
-            onError={() => setBackdropErr(true)}
+        {activeMovie.url ? (
+          <video
+            key={activeEpisodeKey(activeMovie, selectedEp)}
+            src={currentEpUrl}
+            className="w-full h-full object-contain"
+            controls
+            autoPlay={isPlaying}
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
           />
         ) : (
-          <div className="w-full h-full bg-[#0d0d0d]" />
+          <>
+            {!backdropErr && activeMovie.thumbnail ? (
+              <img
+                src={activeMovie.thumbnail}
+                alt={activeMovie.title}
+                className="w-full h-full object-cover opacity-40"
+                onError={() => setBackdropErr(true)}
+              />
+            ) : (
+              <div className="w-full h-full bg-[#0d0d0d]" />
+            )}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <button
+                onClick={() => setIsPlaying(!isPlaying)}
+                className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30 active:scale-95 transition-transform"
+              >
+                {isPlaying ? (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                    <rect x="6" y="4" width="4" height="16" rx="1"/>
+                    <rect x="14" y="4" width="4" height="16" rx="1"/>
+                  </svg>
+                ) : (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                )}
+              </button>
+            </div>
+          </>
         )}
 
         {/* Top bar */}
         <div
-          className="absolute top-0 left-0 right-0 flex items-center px-3 pt-3 pb-8"
+          className="absolute top-0 left-0 right-0 flex items-center px-3 pt-3 pb-8 pointer-events-none"
           style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.75), transparent)" }}
         >
-          <button onClick={onBack} className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+          <button onClick={onBack} className="w-8 h-8 flex items-center justify-center flex-shrink-0 pointer-events-auto">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
               <path d="M19 12H5M12 5l-7 7 7 7"/>
             </svg>
           </button>
           <span className="text-white text-sm font-semibold line-clamp-1 flex-1 text-center mx-2">
-            {movie.title}
+            {activeMovie.title}
           </span>
-          <button className="w-8 h-8 flex items-center justify-center flex-shrink-0">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-              <circle cx="18" cy="5" r="3"/>
-              <circle cx="6" cy="12" r="3"/>
-              <circle cx="18" cy="19" r="3"/>
-              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
-              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
-            </svg>
-          </button>
+          <div className="w-8 h-8 flex-shrink-0" />
         </div>
 
-        {/* Center play button */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <button
-            onClick={() => setIsPlaying(!isPlaying)}
-            className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30 active:scale-95 transition-transform"
+        {/* Progress bar (non-video fallback) */}
+        {!activeMovie.url && (
+          <div
+            className="absolute bottom-0 left-0 right-0 px-3 pb-3 pt-10 pointer-events-none"
+            style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85), transparent)" }}
           >
-            {isPlaying ? (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
-                <rect x="6" y="4" width="4" height="16" rx="1"/>
-                <rect x="14" y="4" width="4" height="16" rx="1"/>
-              </svg>
-            ) : (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
-                <path d="M8 5v14l11-7z"/>
-              </svg>
-            )}
-          </button>
-        </div>
-
-        {/* Skip buttons */}
-        <div className="absolute inset-0 flex items-center justify-between px-10 pointer-events-none">
-          <button className="pointer-events-auto w-10 h-10 flex items-center justify-center">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5">
-              <polyline points="1 4 1 10 7 10"/>
-              <path d="M3.51 15a9 9 0 1 0 .49-3.74"/>
-            </svg>
-          </button>
-          <button className="pointer-events-auto w-10 h-10 flex items-center justify-center">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5">
-              <polyline points="23 4 23 10 17 10"/>
-              <path d="M20.49 15a9 9 0 1 1-.49-3.74"/>
-            </svg>
-          </button>
-        </div>
-
-        {/* Bottom controls */}
-        <div
-          className="absolute bottom-0 left-0 right-0 px-3 pb-3 pt-10"
-          style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85), transparent)" }}
-        >
-          {/* Progress bar */}
-          <div className="relative w-full h-1 bg-white/30 rounded-full mb-2 cursor-pointer">
-            <div
-              className="absolute top-0 left-0 h-full rounded-full"
-              style={{ width: `${progress}%`, background: "linear-gradient(90deg,#a855f7,#ec4899)" }}
-            />
-            <div
-              className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white shadow-md"
-              style={{ left: `calc(${progress}% - 6px)` }}
-            />
-          </div>
-          {/* Time + fullscreen */}
-          <div className="flex items-center justify-between">
-            <span className="text-white/70 text-xs">00:00</span>
-            <div className="flex items-center gap-4">
-              <button>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                  <path d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5"/>
-                  <polyline points="14 2 20 2 20 8"/><line x1="20" y1="2" x2="10" y2="12"/>
-                </svg>
-              </button>
-              <button>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                  <path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/>
-                </svg>
-              </button>
+            <div className="relative w-full h-1 bg-white/30 rounded-full mb-2">
+              <div
+                className="absolute top-0 left-0 h-full rounded-full"
+                style={{ width: `${progress}%`, background: "linear-gradient(90deg,#a855f7,#ec4899)" }}
+              />
             </div>
-            <span className="text-white/70 text-xs">{movie.type === "series" ? "45:00" : "1:58:00"}</span>
+            <div className="flex items-center justify-between">
+              <span className="text-white/70 text-xs">00:00</span>
+              <span className="text-white/70 text-xs">{activeMovie.type === "series" ? "45:00" : "1:58:00"}</span>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* ── INFO SECTION ── */}
+      {/* INFO SECTION */}
       <div className="px-4 pt-4 pb-28">
 
         {/* Title + badge */}
         <div className="flex items-start justify-between gap-2 mb-2">
-          <h1 className="text-white text-lg font-bold leading-snug flex-1">{movie.title}</h1>
+          <h1 className="text-white text-lg font-bold leading-snug flex-1">{activeMovie.title}</h1>
           <span
             className="flex-shrink-0 text-xs font-bold px-2 py-0.5 rounded mt-0.5 text-white"
             style={{ background: "linear-gradient(135deg,#a855f7,#ec4899)" }}
           >
-            {movie.type === "series" ? "TV" : "HD"}
+            {activeMovie.type === "series" ? "TV" : "HD"}
           </span>
         </div>
 
         {/* Meta */}
         <div className="flex items-center gap-2 mb-3 flex-wrap">
-          <div className="flex items-center gap-1">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="#facc15">
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-            </svg>
-            <span className="text-yellow-400 text-sm font-bold">{movie.rating}</span>
-          </div>
-          <span className="text-white/30 text-xs">|</span>
-          <span className="text-white/60 text-xs">{movie.year}</span>
-          {movie.type === "series" && (
+          <span className="text-white/60 text-xs">{activeMovie.year}</span>
+          {activeMovie.type === "series" && activeMovie.seasons && (
             <>
               <span className="text-white/30 text-xs">|</span>
-              <span className="text-white/60 text-xs">{movie.seasons} Season{(movie.seasons ?? 1) > 1 ? "s" : ""}</span>
+              <span className="text-white/60 text-xs">{activeMovie.seasons} Season{activeMovie.seasons > 1 ? "s" : ""}</span>
             </>
           )}
-          <span className="text-white/30 text-xs">|</span>
-          <span className="text-white/60 text-xs">{movie.genre[0]}</span>
+          {activeMovie.category && (
+            <>
+              <span className="text-white/30 text-xs">|</span>
+              <span className="text-white/60 text-xs">{activeMovie.category}</span>
+            </>
+          )}
+          {activeMovie.vjName && (
+            <>
+              <span className="text-white/30 text-xs">|</span>
+              <span className="text-white/60 text-xs">By {activeMovie.vjName}</span>
+            </>
+          )}
+          <span className="text-white/40 text-xs">{(activeMovie.views || 0).toLocaleString()} views</span>
         </div>
 
-        {/* Genre tags */}
-        <div className="flex items-center gap-2 mb-4 flex-wrap">
-          {movie.genre.map((g) => (
-            <span key={g} className="text-xs text-white/70 bg-white/10 px-2.5 py-0.5 rounded-full">{g}</span>
-          ))}
-        </div>
+        {/* Category tag */}
+        {activeMovie.category && (
+          <div className="flex items-center gap-2 mb-4 flex-wrap">
+            <span className="text-xs text-white/70 bg-white/10 px-2.5 py-0.5 rounded-full">{activeMovie.category}</span>
+          </div>
+        )}
 
         {/* Action buttons */}
         <div className="flex items-center justify-around py-3 mb-5 bg-white/5 rounded-2xl">
@@ -269,7 +253,7 @@ export function PlayPage({ movie, onBack }: PlayPageProps) {
 
         {/* Tabs */}
         <div className="flex items-center border-b border-white/10 mb-4">
-          {movie.type === "series" && (
+          {activeMovie.type === "series" && (
             <button
               onClick={() => setActiveTab("episodes")}
               className={`pb-2 mr-6 text-sm font-semibold transition-colors border-b-2 -mb-px ${
@@ -289,39 +273,43 @@ export function PlayPage({ movie, onBack }: PlayPageProps) {
           </button>
         </div>
 
-        {/* Episodes grid — small numbered boxes */}
-        {activeTab === "episodes" && movie.type === "series" && (
+        {/* Episodes */}
+        {activeTab === "episodes" && activeMovie.type === "series" && (
           <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2">
             {episodes.map((ep) => (
               <button
-                key={ep.ep}
-                onClick={() => setSelectedEp(ep.ep)}
-                className={`aspect-square rounded-lg flex items-center justify-center text-sm font-bold transition-all active:scale-95 ${
-                  selectedEp === ep.ep
-                    ? "text-white border border-[#a855f7]/60"
-                    : "bg-white/8 text-white/70 hover:bg-white/15 border border-transparent"
-                }`}
+                key={ep.id}
+                onClick={() => setSelectedEp(ep.episode)}
+                className={`aspect-square rounded-lg flex items-center justify-center text-sm font-bold transition-all active:scale-95`}
                 style={
-                  selectedEp === ep.ep
-                    ? { background: "linear-gradient(135deg,#a855f7,#ec4899)" }
-                    : { background: "rgba(255,255,255,0.07)" }
+                  selectedEp === ep.episode
+                    ? { background: "linear-gradient(135deg,#a855f7,#ec4899)", border: "1px solid rgba(168,85,247,0.6)", color: "white" }
+                    : { background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.7)", border: "1px solid transparent" }
                 }
               >
-                {ep.ep}
+                {ep.episode}
               </button>
             ))}
           </div>
         )}
 
-        {/* Related grid — matches home page movie card sizing */}
+        {/* Related */}
         {activeTab === "related" && (
           <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3 md:gap-4">
-            {related.map((m) => (
-              <RelatedCard key={m.id} movie={m} />
-            ))}
+            {displayRelated.length > 0 ? (
+              displayRelated.map((m) => (
+                <RelatedCard key={m.id} movie={m} onPlay={handleRelatedPlay} />
+              ))
+            ) : (
+              <p className="text-white/30 text-sm col-span-full text-center py-6">No related content yet.</p>
+            )}
           </div>
         )}
       </div>
     </div>
   );
+}
+
+function activeEpisodeKey(movie: ContentItem, ep: number) {
+  return `${movie.id}-ep-${ep}`;
 }
