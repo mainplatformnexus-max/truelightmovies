@@ -21,9 +21,11 @@ const BENEFITS = [
   { icon: "🚫", title: "Ad Free", desc: "Clean ad-free experience" },
 ];
 
-function LoginModal({ onClose, onSwitchToSubscribe }: { onClose: () => void; onSwitchToSubscribe: () => void }) {
+function LoginModal({ onClose, onSwitchToSubscribe, onLogin }: { onClose: () => void; onSwitchToSubscribe: () => void; onLogin: (name: string) => void }) {
   const ref = useRef<HTMLDivElement>(null);
   const [view, setView] = useState<"login" | "signup">("login");
+  const [loginEmail, setLoginEmail] = useState("");
+  const [signupName, setSignupName] = useState("");
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -84,6 +86,8 @@ function LoginModal({ onClose, onSwitchToSubscribe }: { onClose: () => void; onS
                 <input
                   type="text"
                   placeholder="Enter your email..."
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
                   className="w-full h-9 px-3 rounded-lg text-xs text-white placeholder-white/30 outline-none border transition-colors"
                   style={inputStyle}
                   onFocus={focusInput}
@@ -107,6 +111,7 @@ function LoginModal({ onClose, onSwitchToSubscribe }: { onClose: () => void; onS
               <button
                 className="w-full h-9 rounded-lg font-bold text-xs text-white mb-3 hover:opacity-90 transition-opacity"
                 style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}
+                onClick={() => { const name = loginEmail.split("@")[0] || "User"; onLogin(name); onClose(); }}
               >
                 Log In
               </button>
@@ -132,6 +137,8 @@ function LoginModal({ onClose, onSwitchToSubscribe }: { onClose: () => void; onS
                 <input
                   type="text"
                   placeholder="Enter your name..."
+                  value={signupName}
+                  onChange={(e) => setSignupName(e.target.value)}
                   className="w-full h-9 px-3 rounded-lg text-xs text-white placeholder-white/30 outline-none border transition-colors"
                   style={inputStyle}
                   onFocus={focusInput}
@@ -174,6 +181,7 @@ function LoginModal({ onClose, onSwitchToSubscribe }: { onClose: () => void; onS
               <button
                 className="w-full h-9 rounded-lg font-bold text-xs text-white mb-3 hover:opacity-90 transition-opacity"
                 style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}
+                onClick={() => { const name = signupName.trim() || "User"; onLogin(name); onClose(); }}
               >
                 Create Account
               </button>
@@ -199,7 +207,7 @@ function LoginModal({ onClose, onSwitchToSubscribe }: { onClose: () => void; onS
   );
 }
 
-function SubscribeModal({ onClose, isMobile }: { onClose: () => void; isMobile: boolean }) {
+function SubscribeModal({ onClose, isMobile, loggedInUser }: { onClose: () => void; isMobile: boolean; loggedInUser: string | null }) {
   const [selectedPlan, setSelectedPlan] = useState(0);
   const plan = PLANS[selectedPlan];
   const saved = plan.original - plan.price;
@@ -301,11 +309,17 @@ function SubscribeModal({ onClose, isMobile }: { onClose: () => void; isMobile: 
         <div className="flex-1 overflow-y-auto p-6 pt-8" style={{ background: "#13151a" }}>
           <div className="flex items-center gap-2 mb-5">
             <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg,#a855f7,#ec4899)" }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-              </svg>
+              {loggedInUser ? (
+                <span className="text-white text-sm font-bold uppercase">{loggedInUser.charAt(0)}</span>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                </svg>
+              )}
             </div>
-            <span className="text-white font-semibold text-sm">Log in/Sign up &rsaquo;</span>
+            <span className="text-white font-semibold text-sm">
+              {loggedInUser ? loggedInUser : <>Log in/Sign up &rsaquo;</>}
+            </span>
           </div>
 
           <div className="flex gap-2 mb-3">
@@ -410,6 +424,29 @@ export function Header({ onMenuToggle }: HeaderProps) {
   const [showSubscribeModal, setShowSubscribeModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [loggedInUser, setLoggedInUser] = useState<string | null>(null);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setShowProfileMenu(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  const handleLogin = (name: string) => {
+    setLoggedInUser(name);
+    setShowLoginModal(false);
+  };
+
+  const handleLogout = () => {
+    setLoggedInUser(null);
+    setShowProfileMenu(false);
+  };
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 40);
@@ -430,12 +467,14 @@ export function Header({ onMenuToggle }: HeaderProps) {
         <LoginModal
           onClose={() => setShowLoginModal(false)}
           onSwitchToSubscribe={() => setShowSubscribeModal(true)}
+          onLogin={handleLogin}
         />
       )}
       {showSubscribeModal && (
         <SubscribeModal
           onClose={() => setShowSubscribeModal(false)}
           isMobile={isMobile}
+          loggedInUser={loggedInUser}
         />
       )}
 
@@ -485,12 +524,44 @@ export function Header({ onMenuToggle }: HeaderProps) {
           <span>Subscribe</span>
         </button>
 
-        <button
-          onClick={() => { setShowSubscribeModal(false); setShowLoginModal((v) => !v); }}
-          className="h-8 px-4 text-sm font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-lg transition-colors whitespace-nowrap"
-        >
-          Login
-        </button>
+        {loggedInUser ? (
+          <div ref={profileRef} className="relative">
+            <button
+              onClick={() => setShowProfileMenu((v) => !v)}
+              className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm text-white hover:opacity-90 transition-opacity"
+              style={{ background: "linear-gradient(135deg,#a855f7,#ec4899)" }}
+            >
+              {loggedInUser.charAt(0).toUpperCase()}
+            </button>
+            {showProfileMenu && (
+              <div
+                className="absolute right-0 top-10 w-44 rounded-xl shadow-2xl overflow-hidden z-[300]"
+                style={{ background: "#13151a", border: "1px solid rgba(255,255,255,0.1)" }}
+              >
+                <div className="px-3 py-2.5 border-b" style={{ borderColor: "rgba(255,255,255,0.07)" }}>
+                  <p className="text-white text-xs font-semibold truncate">{loggedInUser}</p>
+                  <p className="text-white/40 text-[10px]">Free plan</p>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left px-3 py-2.5 text-xs text-red-400 hover:bg-white/5 transition-colors flex items-center gap-2"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+                  </svg>
+                  Log Out
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <button
+            onClick={() => { setShowSubscribeModal(false); setShowLoginModal((v) => !v); }}
+            className="h-8 px-4 text-sm font-medium text-white/80 hover:text-white border border-white/20 hover:border-white/40 rounded-lg transition-colors whitespace-nowrap"
+          >
+            Login
+          </button>
+        )}
       </header>
 
       {/* ── MOBILE HEADER ── */}
@@ -547,17 +618,50 @@ export function Header({ onMenuToggle }: HeaderProps) {
           </svg>
         </button>
 
-        {/* Login icon — second */}
-        <button
-          onClick={() => { setShowSubscribeModal(false); setShowLoginModal((v) => !v); }}
-          className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded border border-white/20 hover:border-white/40 transition-colors"
-          aria-label="Login"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="2" strokeLinecap="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-            <circle cx="12" cy="7" r="4"/>
-          </svg>
-        </button>
+        {/* Login / Avatar icon — second */}
+        {loggedInUser ? (
+          <div ref={profileRef} className="relative flex-shrink-0">
+            <button
+              onClick={() => setShowProfileMenu((v) => !v)}
+              className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs text-white"
+              style={{ background: "linear-gradient(135deg,#a855f7,#ec4899)" }}
+              aria-label="Profile"
+            >
+              {loggedInUser.charAt(0).toUpperCase()}
+            </button>
+            {showProfileMenu && (
+              <div
+                className="absolute right-0 top-9 w-44 rounded-xl shadow-2xl overflow-hidden z-[300]"
+                style={{ background: "#13151a", border: "1px solid rgba(255,255,255,0.1)" }}
+              >
+                <div className="px-3 py-2.5 border-b" style={{ borderColor: "rgba(255,255,255,0.07)" }}>
+                  <p className="text-white text-xs font-semibold truncate">{loggedInUser}</p>
+                  <p className="text-white/40 text-[10px]">Free plan</p>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left px-3 py-2.5 text-xs text-red-400 hover:bg-white/5 transition-colors flex items-center gap-2"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+                  </svg>
+                  Log Out
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <button
+            onClick={() => { setShowSubscribeModal(false); setShowLoginModal((v) => !v); }}
+            className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded border border-white/20 hover:border-white/40 transition-colors"
+            aria-label="Login"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="2" strokeLinecap="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </button>
+        )}
       </header>
     </>
   );
