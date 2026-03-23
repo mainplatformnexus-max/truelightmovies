@@ -13,11 +13,12 @@ import {
 import { db } from "../lib/firebase";
 import { useAuth } from "../contexts/AuthContext";
 
-type Section = "movies" | "series" | "episodes" | "users" | "activities" | "wallet";
+type Section = "movies" | "series" | "episodes" | "users" | "activities" | "wallet" | "carousel";
 
 const PLANS = ["1 Day", "1 Week", "1 Month"];
 const CATEGORIES = ["Action","Comedy","Drama","Horror","Romance","Sci-Fi","Thriller","Animation","Documentary","Christian"];
 
+interface CarouselItem { id: string; title: string; subtitle?: string; image: string; buttonText?: string; createdAt?: unknown; }
 interface AdminMovie { id: string; title: string; category: string; year: number; url: string; thumbnail: string; views: number; popular: boolean; vjName: string; }
 interface AdminSeries { id: string; title: string; category: string; year: number; seasons: number; episodes: number; thumbnail: string; popular: boolean; vjName: string; }
 interface AdminEpisode { id: string; seriesId: string; seriesTitle?: string; season: number; episode: number; title: string; url: string; duration: string; }
@@ -41,6 +42,7 @@ const statusBadge = (s: string) => {
 };
 
 const SIDEBAR_ITEMS: { id: Section; label: string; icon: React.ReactNode }[] = [
+  { id:"carousel", label:"Carousel", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M1 5h2v14H1V5zm4 0h2v14H5V5zm17 0H10c-.55 0-1 .45-1 1v12c0 .55.45 1 1 1h12c.55 0 1-.45 1-1V6c0-.55-.45-1-1-1zm-1 12H11V7h10v10z"/></svg> },
   { id:"movies", label:"Movies", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg> },
   { id:"series", label:"Series", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 1.99-.9 1.99-2L23 5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg> },
   { id:"episodes", label:"Episodes", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> },
@@ -277,10 +279,17 @@ function ManageUserModal({ user, onClose }: { user: AdminUser; onClose: () => vo
   );
 }
 
+const ADMIN_EMAIL = "mainplatform.nexus@gmail.com";
+
 export function AdminDashboard({ onBack }: { onBack: () => void }) {
   const { profile } = useAuth();
-  const [section, setSection] = useState<Section>("movies");
+  const [section, setSection] = useState<Section>("carousel");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const [carousel, setCarousel] = useState<CarouselItem[]>([]);
+  const [carouselForm, setCarouselForm] = useState({ title: "", subtitle: "", image: "", buttonText: "" });
+  const [showCarouselModal, setShowCarouselModal] = useState(false);
+  const [carouselSaving, setCarouselSaving] = useState(false);
 
   const [movies, setMovies] = useState<AdminMovie[]>([]);
   const [series, setSeries] = useState<AdminSeries[]>([]);
@@ -304,6 +313,9 @@ export function AdminDashboard({ onBack }: { onBack: () => void }) {
   useEffect(() => {
     const unsubs: (() => void)[] = [];
 
+    unsubs.push(onSnapshot(query(collection(db, "carousel"), orderBy("createdAt", "desc")), snap => {
+      setCarousel(snap.docs.map(d => ({ id: d.id, ...d.data() } as CarouselItem)));
+    }));
     unsubs.push(onSnapshot(query(collection(db, "movies"), orderBy("createdAt", "desc")), snap => {
       setMovies(snap.docs.map(d => ({ id: d.id, ...d.data() } as AdminMovie)));
       setLoading(false);
@@ -419,6 +431,102 @@ export function AdminDashboard({ onBack }: { onBack: () => void }) {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 md:p-6">
+
+          {section === "carousel" && (
+            <div>
+              <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
+                <div>
+                  <h2 className="text-white font-bold text-base">Home Carousel</h2>
+                  <p className="text-white/40 text-xs mt-0.5">Manage the hero banner slides shown on the homepage</p>
+                </div>
+                <button onClick={() => setShowCarouselModal(true)} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90" style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                  Add Slide
+                </button>
+              </div>
+
+              {showCarouselModal && (
+                <div className="fixed inset-0 z-[500] flex items-center justify-center" style={{ background: "rgba(0,0,0,0.7)" }}>
+                  <div className="rounded-2xl p-6 w-full max-w-md" style={{ background: "#1a1d24", border: "1px solid rgba(255,255,255,0.1)" }}>
+                    <div className="flex items-center justify-between mb-5">
+                      <h3 className="text-white font-bold text-base">New Carousel Slide</h3>
+                      <button onClick={() => setShowCarouselModal(false)} className="text-white/40 hover:text-white">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+                      </button>
+                    </div>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-white/50 text-xs mb-1.5">Title *</label>
+                        <input value={carouselForm.title} onChange={e => setCarouselForm(f => ({ ...f, title: e.target.value }))} placeholder="Slide title..." className="w-full h-9 px-3 rounded-lg text-sm text-white outline-none border border-white/10 focus:border-purple-500/50 placeholder:text-white/20" style={{ background: "rgba(255,255,255,0.05)" }} />
+                      </div>
+                      <div>
+                        <label className="block text-white/50 text-xs mb-1.5">Subtitle</label>
+                        <input value={carouselForm.subtitle} onChange={e => setCarouselForm(f => ({ ...f, subtitle: e.target.value }))} placeholder="Short description..." className="w-full h-9 px-3 rounded-lg text-sm text-white outline-none border border-white/10 focus:border-purple-500/50 placeholder:text-white/20" style={{ background: "rgba(255,255,255,0.05)" }} />
+                      </div>
+                      <div>
+                        <label className="block text-white/50 text-xs mb-1.5">Image URL *</label>
+                        <input value={carouselForm.image} onChange={e => setCarouselForm(f => ({ ...f, image: e.target.value }))} placeholder="https://..." className="w-full h-9 px-3 rounded-lg text-sm text-white outline-none border border-white/10 focus:border-purple-500/50 placeholder:text-white/20" style={{ background: "rgba(255,255,255,0.05)" }} />
+                      </div>
+                      <div>
+                        <label className="block text-white/50 text-xs mb-1.5">Button Text</label>
+                        <input value={carouselForm.buttonText} onChange={e => setCarouselForm(f => ({ ...f, buttonText: e.target.value }))} placeholder="Watch Now" className="w-full h-9 px-3 rounded-lg text-sm text-white outline-none border border-white/10 focus:border-purple-500/50 placeholder:text-white/20" style={{ background: "rgba(255,255,255,0.05)" }} />
+                      </div>
+                    </div>
+                    <div className="flex gap-2 mt-5">
+                      <button onClick={() => setShowCarouselModal(false)} className="flex-1 h-9 rounded-lg text-sm text-white/50 hover:text-white hover:bg-white/5 border border-white/10 transition-colors">Cancel</button>
+                      <button
+                        disabled={carouselSaving || !carouselForm.title || !carouselForm.image}
+                        onClick={async () => {
+                          setCarouselSaving(true);
+                          try {
+                            await addDoc(collection(db, "carousel"), { ...carouselForm, createdAt: serverTimestamp() });
+                            setCarouselForm({ title: "", subtitle: "", image: "", buttonText: "" });
+                            setShowCarouselModal(false);
+                          } finally {
+                            setCarouselSaving(false);
+                          }
+                        }}
+                        className="flex-1 h-9 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+                        style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}>
+                        {carouselSaving ? "Saving..." : "Add Slide"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {carousel.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <div className="text-white/10 mb-3"><svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor"><path d="M1 5h2v14H1V5zm4 0h2v14H5V5zm17 0H10c-.55 0-1 .45-1 1v12c0 .55.45 1 1 1h12c.55 0 1-.45 1-1V6c0-.55-.45-1-1-1zm-1 12H11V7h10v10z"/></svg></div>
+                  <div className="text-white/40 text-sm">No carousel slides yet</div>
+                  <div className="text-white/25 text-xs mt-1">Add your first slide to customize the homepage hero banner</div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {carousel.map(item => (
+                    <div key={item.id} className="rounded-xl overflow-hidden group relative" style={{ border: "1px solid rgba(255,255,255,0.07)" }}>
+                      <div className="aspect-video bg-white/5 relative overflow-hidden">
+                        {item.image ? (
+                          <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-white/20 text-xs">No image</div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                        <div className="absolute bottom-0 left-0 right-0 p-3">
+                          <div className="text-white font-bold text-sm leading-tight">{item.title}</div>
+                          {item.subtitle && <div className="text-white/60 text-xs mt-0.5 line-clamp-1">{item.subtitle}</div>}
+                          {item.buttonText && <div className="mt-1.5 inline-block px-2 py-0.5 rounded text-[10px] font-medium text-white" style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}>{item.buttonText}</div>}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-end gap-2 p-2" style={{ background: "#1a1d24" }}>
+                        <button onClick={async () => { if (window.confirm("Remove this slide?")) await deleteDoc(doc(db, "carousel", item.id)); }} className="text-red-400/60 hover:text-red-400 text-xs transition-colors px-2 py-1">Remove</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {section === "movies" && (
             <div>

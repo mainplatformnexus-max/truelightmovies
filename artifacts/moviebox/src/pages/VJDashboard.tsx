@@ -72,6 +72,123 @@ interface Transaction {
 
 const CATEGORIES = ["Action", "Comedy", "Drama", "Horror", "Romance", "Sci-Fi", "Thriller", "Animation", "Documentary", "Christian"];
 
+function EditMovieModal({ movie, onClose }: { movie: Movie; onClose: () => void }) {
+  const [form, setForm] = useState({ ...movie });
+  const [saving, setSaving] = useState(false);
+  const save = async () => {
+    setSaving(true);
+    try {
+      await updateDoc(doc(db, "movies", movie.id), {
+        title: form.title, url: form.url, thumbnail: form.thumbnail,
+        category: form.category, year: Number(form.year), popular: form.popular,
+      });
+      onClose();
+    } finally { setSaving(false); }
+  };
+  return (
+    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.75)" }} onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl" style={{ background: "#13151a", border: "1px solid rgba(255,255,255,0.1)" }}>
+        <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+          <span className="text-white font-bold text-sm">Edit Movie</span>
+          <button onClick={onClose} className="text-white/40 hover:text-white/80"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg></button>
+        </div>
+        <div className="p-5 space-y-3">
+          <Input label="Movie Title" value={form.title} onChange={v => setForm(p => ({ ...p, title: v }))} />
+          <Input label="Movie URL" placeholder="https://..." value={form.url} onChange={v => setForm(p => ({ ...p, url: v }))} />
+          <Input label="Thumbnail URL" placeholder="https://..." value={form.thumbnail} onChange={v => setForm(p => ({ ...p, thumbnail: v }))} />
+          <div className="grid grid-cols-2 gap-3">
+            <Select label="Category" options={CATEGORIES} value={form.category} onChange={v => setForm(p => ({ ...p, category: v }))} />
+            <Input label="Year" type="number" value={String(form.year)} onChange={v => setForm(p => ({ ...p, year: Number(v) }))} />
+          </div>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <div onClick={() => setForm(p => ({ ...p, popular: !p.popular }))} className="w-10 h-5 rounded-full flex items-center px-0.5 transition-colors" style={{ background: form.popular ? "linear-gradient(90deg,#a855f7,#ec4899)" : "rgba(255,255,255,0.15)" }}>
+              <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${form.popular ? "translate-x-5" : "translate-x-0"}`} />
+            </div>
+            <span className="text-white/70 text-xs">Popular</span>
+          </label>
+          <GradBtn onClick={save}>{saving ? "Saving..." : "Save Changes"}</GradBtn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EditSeriesModal({ series, onClose }: { series: Series; onClose: () => void }) {
+  const [form, setForm] = useState({ ...series });
+  const [saving, setSaving] = useState(false);
+  const save = async () => {
+    setSaving(true);
+    try {
+      await updateDoc(doc(db, "series", series.id), {
+        title: form.title, thumbnail: form.thumbnail, category: form.category,
+        year: Number(form.year), seasons: Number(form.seasons), popular: form.popular,
+      });
+      onClose();
+    } finally { setSaving(false); }
+  };
+  return (
+    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.75)" }} onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl" style={{ background: "#13151a", border: "1px solid rgba(255,255,255,0.1)" }}>
+        <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+          <span className="text-white font-bold text-sm">Edit Series</span>
+          <button onClick={onClose} className="text-white/40 hover:text-white/80"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg></button>
+        </div>
+        <div className="p-5 space-y-3">
+          <Input label="Series Title" value={form.title} onChange={v => setForm(p => ({ ...p, title: v }))} />
+          <Input label="Thumbnail URL" placeholder="https://..." value={form.thumbnail} onChange={v => setForm(p => ({ ...p, thumbnail: v }))} />
+          <div className="grid grid-cols-3 gap-3">
+            <Select label="Category" options={CATEGORIES} value={form.category} onChange={v => setForm(p => ({ ...p, category: v }))} />
+            <Input label="Year" type="number" value={String(form.year)} onChange={v => setForm(p => ({ ...p, year: Number(v) }))} />
+            <Input label="Seasons" type="number" value={String(form.seasons)} onChange={v => setForm(p => ({ ...p, seasons: Number(v) }))} />
+          </div>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <div onClick={() => setForm(p => ({ ...p, popular: !p.popular }))} className="w-10 h-5 rounded-full flex items-center px-0.5 transition-colors" style={{ background: form.popular ? "linear-gradient(90deg,#a855f7,#ec4899)" : "rgba(255,255,255,0.15)" }}>
+              <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${form.popular ? "translate-x-5" : "translate-x-0"}`} />
+            </div>
+            <span className="text-white/70 text-xs">Popular</span>
+          </label>
+          <GradBtn onClick={save}>{saving ? "Saving..." : "Save Changes"}</GradBtn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EditEpisodeModal({ episode, onClose }: { episode: Episode; onClose: () => void }) {
+  const [form, setForm] = useState({ ...episode });
+  const [saving, setSaving] = useState(false);
+  const save = async () => {
+    setSaving(true);
+    try {
+      await updateDoc(doc(db, "episodes", episode.id), {
+        title: form.title, url: form.url, duration: form.duration,
+        season: Number(form.season), episode: Number(form.episode),
+      });
+      onClose();
+    } finally { setSaving(false); }
+  };
+  return (
+    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.75)" }} onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl" style={{ background: "#13151a", border: "1px solid rgba(255,255,255,0.1)" }}>
+        <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+          <span className="text-white font-bold text-sm">Edit Episode</span>
+          <button onClick={onClose} className="text-white/40 hover:text-white/80"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg></button>
+        </div>
+        <div className="p-5 space-y-3">
+          <Input label="Episode Title" value={form.title} onChange={v => setForm(p => ({ ...p, title: v }))} />
+          <Input label="Episode URL" placeholder="https://..." value={form.url} onChange={v => setForm(p => ({ ...p, url: v }))} />
+          <Input label="Duration" placeholder="e.g. 45m" value={form.duration} onChange={v => setForm(p => ({ ...p, duration: v }))} />
+          <div className="grid grid-cols-2 gap-3">
+            <Input label="Season #" type="number" value={String(form.season)} onChange={v => setForm(p => ({ ...p, season: Number(v) }))} />
+            <Input label="Episode #" type="number" value={String(form.episode)} onChange={v => setForm(p => ({ ...p, episode: Number(v) }))} />
+          </div>
+          <GradBtn onClick={save}>{saving ? "Saving..." : "Save Changes"}</GradBtn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const navItems: { id: Section; label: string; icon: JSX.Element }[] = [
   { id: "overview", label: "Overview", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg> },
   { id: "movies", label: "Movies", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg> },
@@ -210,6 +327,7 @@ function OverviewSection({ movies, series, episodes, users, transactions }: { mo
 
 function MoviesSection({ movies, setMovies, vjName }: { movies: Movie[]; setMovies: (m: Movie[]) => void; vjName: string }) {
   const [showModal, setShowModal] = useState(false);
+  const [editMovie, setEditMovie] = useState<Movie | null>(null);
   const [form, setForm] = useState({ title: "", category: "", year: new Date().getFullYear().toString(), url: "", thumbnail: "", popular: false });
   const [search, setSearch] = useState("");
   const [saving, setSaving] = useState(false);
@@ -248,6 +366,7 @@ function MoviesSection({ movies, setMovies, vjName }: { movies: Movie[]; setMovi
 
   return (
     <div>
+      {editMovie && <EditMovieModal movie={editMovie} onClose={() => setEditMovie(null)} />}
       {showModal && (
         <Modal title="Upload Movie" onClose={() => setShowModal(false)}>
           <div className="space-y-3">
@@ -289,7 +408,12 @@ function MoviesSection({ movies, setMovies, vjName }: { movies: Movie[]; setMovi
                     {m.popular ? "Popular" : "Set Popular"}
                   </button>
                 </td>
-                <td className="px-4 py-3"><button onClick={() => remove(m.id)} className="text-red-400/60 hover:text-red-400 text-xs transition-colors">Remove</button></td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => setEditMovie(m)} className="text-purple-400/70 hover:text-purple-400 text-xs transition-colors">Edit</button>
+                    <button onClick={() => remove(m.id)} className="text-red-400/60 hover:text-red-400 text-xs transition-colors">Remove</button>
+                  </div>
+                </td>
               </tr>
             ))}
             {filtered.length === 0 && <tr><td colSpan={6} className="px-4 py-8 text-center text-white/30 text-sm">No movies found</td></tr>}
@@ -302,6 +426,7 @@ function MoviesSection({ movies, setMovies, vjName }: { movies: Movie[]; setMovi
 
 function SeriesSection({ series, setSeries, vjName }: { series: Series[]; setSeries: (s: Series[]) => void; vjName: string }) {
   const [showModal, setShowModal] = useState(false);
+  const [editSeries, setEditSeries] = useState<Series | null>(null);
   const [form, setForm] = useState({ title: "", category: "", year: new Date().getFullYear().toString(), thumbnail: "", popular: false, seasons: "1" });
   const [search, setSearch] = useState("");
   const [saving, setSaving] = useState(false);
@@ -338,6 +463,7 @@ function SeriesSection({ series, setSeries, vjName }: { series: Series[]; setSer
 
   return (
     <div>
+      {editSeries && <EditSeriesModal series={editSeries} onClose={() => setEditSeries(null)} />}
       {showModal && (
         <Modal title="Add Series" onClose={() => setShowModal(false)}>
           <div className="space-y-3">
@@ -380,7 +506,12 @@ function SeriesSection({ series, setSeries, vjName }: { series: Series[]; setSer
                     {s.popular ? "Popular" : "Set Popular"}
                   </button>
                 </td>
-                <td className="px-4 py-3"><button onClick={() => remove(s.id)} className="text-red-400/60 hover:text-red-400 text-xs transition-colors">Remove</button></td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => setEditSeries(s)} className="text-purple-400/70 hover:text-purple-400 text-xs transition-colors">Edit</button>
+                    <button onClick={() => remove(s.id)} className="text-red-400/60 hover:text-red-400 text-xs transition-colors">Remove</button>
+                  </div>
+                </td>
               </tr>
             ))}
             {filtered.length === 0 && <tr><td colSpan={7} className="px-4 py-8 text-center text-white/30 text-sm">No series found</td></tr>}
@@ -393,6 +524,7 @@ function SeriesSection({ series, setSeries, vjName }: { series: Series[]; setSer
 
 function EpisodesSection({ series, episodes }: { series: Series[]; episodes: Episode[] }) {
   const [showModal, setShowModal] = useState(false);
+  const [editEpisode, setEditEpisode] = useState<Episode | null>(null);
   const [filterSeries, setFilterSeries] = useState("");
   const [form, setForm] = useState({ seriesId: "", title: "", season: "1", episode: "1", url: "", duration: "" });
   const [saving, setSaving] = useState(false);
@@ -426,6 +558,7 @@ function EpisodesSection({ series, episodes }: { series: Series[]; episodes: Epi
 
   return (
     <div>
+      {editEpisode && <EditEpisodeModal episode={editEpisode} onClose={() => setEditEpisode(null)} />}
       {showModal && (
         <Modal title="Add Episode" onClose={() => setShowModal(false)}>
           <div className="space-y-3">
@@ -460,7 +593,12 @@ function EpisodesSection({ series, episodes }: { series: Series[]; episodes: Epi
                 <td className="px-4 py-3 text-white/60 text-sm">E{e.episode}</td>
                 <td className="px-4 py-3 text-white text-sm font-medium">{e.title}</td>
                 <td className="px-4 py-3 text-white/60 text-sm">{e.duration || "—"}</td>
-                <td className="px-4 py-3"><button onClick={() => remove(e.id)} className="text-red-400/60 hover:text-red-400 text-xs transition-colors">Remove</button></td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => setEditEpisode(e)} className="text-purple-400/70 hover:text-purple-400 text-xs transition-colors">Edit</button>
+                    <button onClick={() => remove(e.id)} className="text-red-400/60 hover:text-red-400 text-xs transition-colors">Remove</button>
+                  </div>
+                </td>
               </tr>
             ))}
             {filtered.length === 0 && <tr><td colSpan={6} className="px-4 py-8 text-center text-white/30 text-sm">No episodes found</td></tr>}

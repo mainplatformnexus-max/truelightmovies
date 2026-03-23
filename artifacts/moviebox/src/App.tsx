@@ -10,8 +10,12 @@ import { PlayPage } from "./pages/PlayPage";
 import { VJDashboard } from "./pages/VJDashboard";
 import { AdminDashboard } from "./pages/AdminDashboard";
 import type { ContentItem } from "./lib/types";
+import { useAuth } from "./contexts/AuthContext";
+
+const ADMIN_EMAIL = "mainplatform.nexus@gmail.com";
 
 function App() {
+  const { profile } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeNav, setActiveNav] = useState("home");
   const [selectedMovie, setSelectedMovie] = useState<ContentItem | null>(null);
@@ -30,6 +34,10 @@ function App() {
   }
 
   if (activeNav === "admin-dashboard") {
+    if (profile?.email !== ADMIN_EMAIL) {
+      setActiveNav("home");
+      return null;
+    }
     return <AdminDashboard onBack={() => setActiveNav("home")} />;
   }
 
