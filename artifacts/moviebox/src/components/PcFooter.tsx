@@ -1,12 +1,12 @@
 export function PcFooter() {
   const friendLinks = [
-    { label: "Free Movies", href: "https://luofilm.site" },
-    { label: "123Movies", href: "https://luowatch.xyz" },
-    { label: "Movies Online", href: "https://luoancientmovies.com" },
-    { label: "Movie4k", href: "https://vjpilesug.com" },
-    { label: "Watch Movies Online Free", href: "https://vjdimpozmovies.xyz" },
-    { label: "Watch Series", href: "https://betmali.site" },
-    { label: "Fmovies", href: "https://nexusplatform.site" },
+    { label: "Luo Film", href: "https://luofilm.site" },
+    { label: "Luo Watch", href: "https://luowatch.xyz" },
+    { label: "Luo Ancient Movies", href: "https://luoancientmovies.com" },
+    { label: "VJ Pile SUG", href: "https://vjpilesug.com" },
+    { label: "VJ Dimpoz Movies", href: "https://vjdimpozmovies.xyz" },
+    { label: "BetMali", href: "https://betmali.site" },
+    { label: "Nexus Platform", href: "https://nexusplatform.site" },
   ];
 
   const policyLinks = [
@@ -57,15 +57,27 @@ export function PcFooter() {
 
       <a
         href="mailto:mainplatform.nexus@gmail.com"
-        className="text-white/60 text-xs hover:text-white transition-colors mb-3"
+        className="text-white/60 text-xs hover:text-white transition-colors mb-2"
         target="_blank"
         rel="noreferrer"
       >
         Service Email: mainplatform.nexus@gmail.com
       </a>
 
+      <p className="text-white/40 text-xs text-center mb-1">
+        Managed under{" "}
+        <a
+          href="https://www.nexusplatform.site"
+          target="_blank"
+          rel="noreferrer"
+          className="text-white/60 hover:text-white transition-colors underline underline-offset-2"
+        >
+          Nexus Platform
+        </a>
+      </p>
+
       <p className="text-white/40 text-xs text-center">
-        © 2024–2027 MovieBox. All Rights Reserved. This site does not store any files on our server.
+        © 2024–2027 True Light. All Rights Reserved. This site does not store any files on our server.
       </p>
     </footer>
   );

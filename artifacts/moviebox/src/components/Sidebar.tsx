@@ -168,7 +168,7 @@ export function Sidebar({ isOpen, onClose, activeNav, onNavChange }: SidebarProp
               </a>
             ))}
           </div>
-          <p className="text-white/40 text-xs mt-2">© 2024 TRUE LIGHT</p>
+          <p className="text-white/40 text-xs mt-2">© 2024–2027 True Light</p>
         </div>
       </aside>
     </>
