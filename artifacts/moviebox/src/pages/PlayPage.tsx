@@ -1,52 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { ContentItem, EpisodeItem } from "../lib/types";
 import { useContent } from "../lib/useContent";
 import { useAuth } from "../contexts/AuthContext";
+import { SubscribeModal } from "../components/SubscribeModal";
 
 interface PlayPageProps {
   movie: ContentItem;
   onBack: () => void;
-}
-
-const PLANS = [
-  { name: "1 Day", price: "UGX 1,000", desc: "24-hour access" },
-  { name: "1 Week", price: "UGX 5,000", desc: "7-day access" },
-  { name: "1 Month", price: "UGX 15,000", desc: "30-day full access" },
-];
-
-function SubModal({ onClose }: { onClose: () => void }) {
-  return (
-    <div className="fixed inset-0 z-[99999] flex items-end sm:items-center justify-center" style={{ background: "rgba(0,0,0,0.75)" }} onClick={onClose}>
-      <div className="w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl p-6 pb-8" style={{ background: "#1a1d24", border: "1px solid rgba(255,255,255,0.1)" }} onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg,#a855f7,#ec4899)" }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
-            </div>
-            <div>
-              <div className="text-white font-bold text-sm">Subscription Required</div>
-              <div className="text-white/40 text-xs">Choose a plan to unlock content</div>
-            </div>
-          </div>
-          <button onClick={onClose} className="text-white/40 hover:text-white">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-          </button>
-        </div>
-        <div className="space-y-2 mb-4">
-          {PLANS.map(plan => (
-            <div key={plan.name} className="flex items-center justify-between p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
-              <div>
-                <div className="text-white font-semibold text-sm">{plan.name}</div>
-                <div className="text-white/40 text-xs">{plan.desc}</div>
-              </div>
-              <div className="font-bold text-sm" style={{ color: "#a855f7" }}>{plan.price}</div>
-            </div>
-          ))}
-        </div>
-        <p className="text-white/30 text-xs text-center">Contact the admin to activate your subscription</p>
-      </div>
-    </div>
-  );
 }
 
 function RelatedCard({ movie, onPlay }: { movie: ContentItem; onPlay?: (m: ContentItem) => void }) {
@@ -77,7 +37,15 @@ export function PlayPage({ movie, onBack }: PlayPageProps) {
   const isSubscribed = profile?.status === "active" || profile?.role === "vj" || profile?.role === "admin";
 
   const [showSubModal, setShowSubModal] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isPlaying, setIsPlaying] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
   const [liked, setLiked] = useState(false);
   const [inList, setInList] = useState(false);
   const [progress] = useState(0);
@@ -120,7 +88,7 @@ export function PlayPage({ movie, onBack }: PlayPageProps) {
 
   return (
     <div className="fixed inset-0 z-[9999] bg-[#101114] text-white overflow-y-auto">
-      {showSubModal && <SubModal onClose={() => setShowSubModal(false)} />}
+      {showSubModal && <SubscribeModal onClose={() => setShowSubModal(false)} isMobile={isMobile} />}
 
       {/* VIDEO PLAYER */}
       <div className="relative w-full bg-black" style={{ aspectRatio: "16/9" }}>
