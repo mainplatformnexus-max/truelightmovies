@@ -90,8 +90,8 @@ export function MovieCard({ movie, variant = "portrait", className = "" }: Movie
       </div>
 
       <div className="mt-1.5 px-0.5">
-        <p className="text-white text-xs font-medium line-clamp-1 leading-4">{movie.title}</p>
-        <div className="flex items-center gap-1.5 mt-0.5">
+        <p className="movie-card-title text-white text-xs font-medium line-clamp-1 leading-4">{movie.title}</p>
+        <div className="movie-card-meta flex items-center gap-1.5 mt-0.5">
           <span className="text-yellow-400 text-xs">★ {movie.rating}</span>
           <span className="text-white/50 text-xs">{movie.year}</span>
         </div>

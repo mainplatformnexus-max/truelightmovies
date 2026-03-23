@@ -17,25 +17,13 @@ export function DownloadBar() {
                 <stop offset="1" stopColor="#ec4899"/>
               </linearGradient>
             </defs>
-            <text x="50%" y="55%" dominantBaseline="middle" textAnchor="middle" fill="#101114" fontSize="20" fontWeight="bold">M</text>
+            <text x="50%" y="55%" dominantBaseline="middle" textAnchor="middle" fill="#fff" fontSize="20" fontWeight="bold">T</text>
           </svg>
         </div>
       </div>
 
-      <div className="flex-1 flex flex-wrap items-center text-xs font-medium text-[#07b84e] leading-tight">
-        <span>Get the</span>
-        <svg width="24" height="24" viewBox="0 0 40 45" fill="none" className="mx-1">
-          <rect width="40" height="45" rx="8" fill="url(#dlGrad2)"/>
-          <defs>
-            <linearGradient id="dlGrad2" x1="0" y1="0" x2="40" y2="45" gradientUnits="userSpaceOnUse">
-              <stop stopColor="#a855f7"/>
-              <stop offset="1" stopColor="#ec4899"/>
-            </linearGradient>
-          </defs>
-          <text x="50%" y="55%" dominantBaseline="middle" textAnchor="middle" fill="#101114" fontSize="20" fontWeight="bold">M</text>
-        </svg>
-        <span className="font-bold">MovieBox App</span>
-        <span className="ml-1">for Free, No Subscription Needed!</span>
+      <div className="flex-1 flex items-center text-[11px] font-medium text-white/80 leading-tight min-w-0 overflow-hidden">
+        <span className="truncate">Get <span className="font-bold text-white">TRUE LIGHT</span> App Free!</span>
       </div>
 
       <a href="#" className="flex-shrink-0 gradient-btn px-3 py-1.5 text-xs font-bold text-[#101114] whitespace-nowrap">

@@ -102,10 +102,10 @@ export function Sidebar({ isOpen, onClose, activeNav, onNavChange }: SidebarProp
                     <stop offset="1" stopColor="#ec4899"/>
                   </linearGradient>
                 </defs>
-                <text x="50%" y="55%" dominantBaseline="middle" textAnchor="middle" fill="#101114" fontSize="20" fontWeight="bold">M</text>
+                <text x="50%" y="55%" dominantBaseline="middle" textAnchor="middle" fill="#fff" fontSize="20" fontWeight="bold">T</text>
               </svg>
             </div>
-            <h2 className="text-white font-bold text-lg leading-none">MovieBox</h2>
+            <h2 className="text-white font-bold text-lg leading-none">TRUE LIGHT</h2>
           </a>
         </div>
 
@@ -162,7 +162,7 @@ export function Sidebar({ isOpen, onClose, activeNav, onNavChange }: SidebarProp
               </a>
             ))}
           </div>
-          <p className="text-white/40 text-xs mt-2">© 2024 MovieBox</p>
+          <p className="text-white/40 text-xs mt-2">© 2024 TRUE LIGHT</p>
         </div>
       </aside>
     </>

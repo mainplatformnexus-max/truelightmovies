@@ -24,11 +24,11 @@ export function MovieRow({ title, movies, showAll = false }: MovieRowProps) {
     <section className="mb-8">
       {/* Section header */}
       <div className="flex items-center justify-between mb-3 px-0 md:px-0">
-        <h2 className="text-white font-bold text-base md:text-xl leading-5 truncate max-w-[90%]">
+        <h2 className="section-title text-white font-bold text-base md:text-xl leading-5 truncate max-w-[90%]">
           {title}
         </h2>
         <div className="flex items-center gap-2">
-          <a href="#" className="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">
+          <a href="#" className="see-all-link text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">
             See All
           </a>
           {/* Desktop scroll arrows */}

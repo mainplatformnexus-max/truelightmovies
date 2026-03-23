@@ -193,6 +193,53 @@
   .pc-content {
     margin-left: 0;
   }
+
+  /* Smaller hero text on mobile */
+  .hero-title {
+    font-size: 1.1rem !important;
+    line-height: 1.3 !important;
+    margin-bottom: 6px !important;
+  }
+  .hero-meta {
+    font-size: 0.7rem !important;
+  }
+  .hero-badge {
+    font-size: 0.65rem !important;
+    padding: 1px 6px !important;
+  }
+
+  /* Smaller hero buttons */
+  .hero-btn {
+    padding: 5px 12px !important;
+    font-size: 0.7rem !important;
+    gap: 4px !important;
+  }
+  .hero-btn svg {
+    width: 12px !important;
+    height: 12px !important;
+  }
+
+  /* Smaller section headings */
+  .section-title {
+    font-size: 0.85rem !important;
+  }
+  .see-all-link {
+    font-size: 0.7rem !important;
+  }
+
+  /* Smaller movie card text */
+  .movie-card-title {
+    font-size: 0.7rem !important;
+  }
+  .movie-card-meta {
+    font-size: 0.65rem !important;
+  }
+
+  /* Smaller gradient-btn on mobile */
+  .gradient-btn {
+    font-size: 0.7rem !important;
+    padding: 4px 10px !important;
+  }
 }
 
 /* Swiper bullet */
