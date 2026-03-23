@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sidebar } from "./components/Sidebar";
 import { Header } from "./components/Header";
 import { MobileNav } from "./components/MobileNav";
@@ -15,10 +15,18 @@ import { useAuth } from "./contexts/AuthContext";
 const ADMIN_EMAIL = "mainplatform.nexus@gmail.com";
 
 function App() {
-  const { profile } = useAuth();
+  const { profile, loading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeNav, setActiveNav] = useState("home");
   const [selectedMovie, setSelectedMovie] = useState<ContentItem | null>(null);
+
+  const isAdmin = profile?.email === ADMIN_EMAIL;
+
+  useEffect(() => {
+    if (!loading && activeNav === "admin-dashboard" && !isAdmin) {
+      setActiveNav("home");
+    }
+  }, [activeNav, isAdmin, loading]);
 
   const handlePlay = (movie: ContentItem) => {
     setSelectedMovie(movie);
@@ -33,11 +41,7 @@ function App() {
     return <VJDashboard onBack={() => setActiveNav("home")} />;
   }
 
-  if (activeNav === "admin-dashboard") {
-    if (profile?.email !== ADMIN_EMAIL) {
-      setActiveNav("home");
-      return null;
-    }
+  if (activeNav === "admin-dashboard" && isAdmin) {
     return <AdminDashboard onBack={() => setActiveNav("home")} />;
   }
 
@@ -63,6 +67,7 @@ function App() {
         onClose={() => setSidebarOpen(false)}
         activeNav={activeNav}
         onNavChange={setActiveNav}
+        isAdmin={isAdmin}
       />
       <div className="md:ml-[200px] min-h-screen">
         <Header onMenuToggle={() => setSidebarOpen(true)} />

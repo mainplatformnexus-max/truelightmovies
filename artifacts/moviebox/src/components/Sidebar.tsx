@@ -1,4 +1,3 @@
-import { useState } from "react";
 import vjemmaLogo from "@assets/IMG-20260203-WA0010.jpg-removebg-preview_1774231087997.png";
 
 interface SidebarProps {
@@ -6,6 +5,7 @@ interface SidebarProps {
   onClose: () => void;
   activeNav: string;
   onNavChange: (id: string) => void;
+  isAdmin?: boolean;
 }
 
 const navItems = [
@@ -74,7 +74,7 @@ const navItems = [
   },
 ];
 
-export function Sidebar({ isOpen, onClose, activeNav, onNavChange }: SidebarProps) {
+export function Sidebar({ isOpen, onClose, activeNav, onNavChange, isAdmin }: SidebarProps) {
   return (
     <>
       {/* Mobile overlay */}
@@ -146,18 +146,20 @@ export function Sidebar({ isOpen, onClose, activeNav, onNavChange }: SidebarProp
           </button>
         </div>
 
-        {/* Admin Dashboard */}
-        <div className="mx-3 mb-3">
-          <button
-            onClick={() => { onNavChange("admin-dashboard"); onClose(); }}
-            className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg text-left transition-colors ${activeNav === "admin-dashboard" ? "nav-active" : "hover:bg-white/10"}`}
-          >
-            <span className={`flex-shrink-0 ${activeNav === "admin-dashboard" ? "text-[#a855f7]" : "text-white/80"}`}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
-            </span>
-            <span className={`text-base font-bold leading-5 nav-title ${activeNav === "admin-dashboard" ? "" : "text-white/80"}`}>Admin Dashboard</span>
-          </button>
-        </div>
+        {/* Admin Dashboard — only visible to the admin account */}
+        {isAdmin && (
+          <div className="mx-3 mb-3">
+            <button
+              onClick={() => { onNavChange("admin-dashboard"); onClose(); }}
+              className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg text-left transition-colors ${activeNav === "admin-dashboard" ? "nav-active" : "hover:bg-white/10"}`}
+            >
+              <span className={`flex-shrink-0 ${activeNav === "admin-dashboard" ? "text-[#a855f7]" : "text-white/80"}`}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
+              </span>
+              <span className={`text-base font-bold leading-5 nav-title ${activeNav === "admin-dashboard" ? "" : "text-white/80"}`}>Admin Dashboard</span>
+            </button>
+          </div>
+        )}
 
         {/* Get App section */}
         <div className="px-3 mt-4">
