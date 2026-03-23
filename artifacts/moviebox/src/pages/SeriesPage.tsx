@@ -1,10 +1,11 @@
 import { MovieRow } from "../components/MovieRow";
 import { PcFooter } from "../components/PcFooter";
 import { H5Footer } from "../components/H5Footer";
+import type { Movie } from "../data/movies";
 import { popularSeries } from "../data/movies";
 
 interface SeriesPageProps {
-  onPlay?: () => void;
+  onPlay?: (movie: Movie) => void;
 }
 
 export function SeriesPage({ onPlay }: SeriesPageProps) {

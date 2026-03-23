@@ -7,17 +7,25 @@ import { HomePage } from "./pages/Home";
 import { MoviesPage } from "./pages/MoviesPage";
 import { SeriesPage } from "./pages/SeriesPage";
 import { PlayPage } from "./pages/PlayPage";
+import type { Movie } from "./data/movies";
+import { featuredMovies } from "./data/movies";
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeNav, setActiveNav] = useState("home");
+  const [selectedMovie, setSelectedMovie] = useState<Movie>(featuredMovies[0]);
 
-  const handlePlay = () => {
+  const handlePlay = (movie: Movie) => {
+    setSelectedMovie(movie);
     setActiveNav("play");
   };
 
+  const handleBack = () => {
+    setActiveNav("home");
+  };
+
   if (activeNav === "play") {
-    return <PlayPage />;
+    return <PlayPage movie={selectedMovie} onBack={handleBack} />;
   }
 
   const renderContent = () => {
@@ -33,29 +41,19 @@ function App() {
 
   return (
     <div className="min-h-screen bg-[#101114] text-white">
-      {/* Sidebar (desktop fixed, mobile drawer) */}
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         activeNav={activeNav}
         onNavChange={setActiveNav}
       />
-
-      {/* Main content area */}
       <div className="md:ml-[200px] min-h-screen">
-        {/* Header */}
         <Header onMenuToggle={() => setSidebarOpen(true)} />
-
-        {/* Page content */}
         <main className="pt-11 md:pt-10">
           {renderContent()}
         </main>
       </div>
-
-      {/* Mobile bottom navigation */}
       <MobileNav activeNav={activeNav} onNavChange={setActiveNav} />
-
-      {/* Mobile download bar (above nav) */}
       <div className="md:hidden fixed bottom-[56px] left-0 right-0 z-40">
         <DownloadBar />
       </div>
