@@ -1,4 +1,5 @@
 import { useState } from "react";
+import vjemmaLogo from "@assets/IMG-20260203-WA0010.jpg-removebg-preview_1774231087997.png";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -91,21 +92,14 @@ export function Sidebar({ isOpen, onClose, activeNav, onNavChange }: SidebarProp
         }`}
       >
         {/* Logo */}
-        <div className="px-3 mb-12 mt-1">
-          <a href="/" className="flex items-center gap-2">
-            <div className="relative" style={{ width: 24, height: 27 }}>
-              <svg width="24" height="27" viewBox="0 0 40 45" fill="none">
-                <rect width="40" height="45" rx="8" fill="url(#sidebarGrad)"/>
-                <defs>
-                  <linearGradient id="sidebarGrad" x1="0" y1="0" x2="40" y2="45" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#a855f7"/>
-                    <stop offset="1" stopColor="#ec4899"/>
-                  </linearGradient>
-                </defs>
-                <text x="50%" y="55%" dominantBaseline="middle" textAnchor="middle" fill="#fff" fontSize="20" fontWeight="bold">T</text>
-              </svg>
-            </div>
-            <h2 className="text-white font-bold text-lg leading-none">TRUE LIGHT</h2>
+        <div className="px-3 mb-8 mt-1">
+          <a href="/" className="flex items-center justify-center">
+            <img
+              src={vjemmaLogo}
+              alt="VJ Emma True Light Film"
+              className="w-full"
+              style={{ maxWidth: 160, height: "auto" }}
+            />
           </a>
         </div>
 
