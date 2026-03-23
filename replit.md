@@ -4,6 +4,21 @@
 
 pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
 
+## MovieBox Website
+
+A movie streaming website clone (`artifacts/moviebox`) built as a React + Vite SPA. Replicates the MovieBox design exactly including:
+
+- **Dark theme** (`#101114` background) matching the original
+- **Desktop layout**: Fixed 200px left sidebar with logo, nav items, "Download App" button
+- **Mobile layout**: Top header with hamburger + search, bottom navigation bar (5 items)
+- **Hero Banner**: Auto-rotating carousel with movie backdrops, gradient overlays, Watch Now button, navigation arrows, dot indicators, thumbnail strip
+- **Movie Rows**: Horizontally scrollable rows per category (Popular Series, Popular Movie, Action, Horror, Adventure)
+- **Movie Cards**: Poster cards with TOP/TV badges, ratings, hover play overlay
+- **Download Bar**: Mobile-only sticky bar promoting the app
+- **PC/H5 Footers**: Separate footers for desktop and mobile with friend links, policy links, contact email
+- Gradient accent color: `linear-gradient(91deg, #1cb7ff 1.22%, #2ff58b 50.24%)`
+- Data: Static movie data using TMDB image CDN for real posters/backdrops
+
 ## Stack
 
 - **Monorepo tool**: pnpm workspaces
