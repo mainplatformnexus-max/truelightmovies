@@ -7,6 +7,7 @@ import { HomePage } from "./pages/Home";
 import { MoviesPage } from "./pages/MoviesPage";
 import { SeriesPage } from "./pages/SeriesPage";
 import { PlayPage } from "./pages/PlayPage";
+import { VJDashboard } from "./pages/VJDashboard";
 import type { Movie } from "./data/movies";
 import { featuredMovies } from "./data/movies";
 
@@ -23,6 +24,10 @@ function App() {
   const handleBack = () => {
     setActiveNav("home");
   };
+
+  if (activeNav === "vj-dashboard") {
+    return <VJDashboard onBack={() => setActiveNav("home")} />;
+  }
 
   if (activeNav === "play") {
     return <PlayPage movie={selectedMovie} onBack={handleBack} />;

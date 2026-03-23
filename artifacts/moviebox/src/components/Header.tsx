@@ -6,10 +6,11 @@ interface HeaderProps {
 }
 
 const PLANS = [
-  { id: "monthly", label: "Monthly", price: 3.59, original: 5.99, discount: 40 },
-  { id: "quarterly", label: "Quarterly", price: 10.49, original: 17.49, discount: 40 },
-  { id: "annual", label: "Annual", price: 28.99, original: 56.99, discount: 50 },
+  { id: "day", label: "1 Day", price: 2000, original: 3000, discount: 33 },
+  { id: "week", label: "1 Week", price: 5000, original: 8000, discount: 38 },
+  { id: "month", label: "1 Month", price: 20000, original: 30000, discount: 33 },
 ];
+const fmt = (n: number) => `UGX ${n.toLocaleString()}`;
 
 const BENEFITS = [
   { icon: "🎬", title: "Members Access", desc: "VIP exclusive content/episodes" },
@@ -201,7 +202,7 @@ function LoginModal({ onClose, onSwitchToSubscribe }: { onClose: () => void; onS
 function SubscribeModal({ onClose, isMobile }: { onClose: () => void; isMobile: boolean }) {
   const [selectedPlan, setSelectedPlan] = useState(0);
   const plan = PLANS[selectedPlan];
-  const saved = (plan.original - plan.price).toFixed(2);
+  const saved = plan.original - plan.price;
 
   if (isMobile) {
     return (
@@ -210,70 +211,53 @@ function SubscribeModal({ onClose, isMobile }: { onClose: () => void; isMobile: 
         style={{ background: "rgba(0,0,0,0.8)" }}
         onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       >
-        <div
-          className="w-full rounded-t-2xl overflow-hidden"
-          style={{ background: "#13151a" }}
-        >
-          {/* Top bar */}
+        <div className="w-full rounded-t-2xl overflow-hidden" style={{ background: "#13151a" }}>
           <div className="flex items-center justify-between px-4 pt-2.5 pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
             <span className="text-white font-bold text-xs">VIP Subscription</span>
             <button onClick={onClose} className="text-white/40 hover:text-white/70 transition-colors p-1">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-                <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
             </button>
           </div>
 
           <div className="px-3 pt-2.5 pb-3">
-            {/* Plan pills */}
             <div className="flex gap-1.5 mb-2">
               {PLANS.map((p, i) => (
                 <button
                   key={p.id}
                   onClick={() => setSelectedPlan(i)}
                   className="relative flex-1 rounded-lg py-2 px-1 text-center transition-all border"
-                  style={{
-                    background: i === selectedPlan ? "rgba(168,85,247,0.12)" : "rgba(255,255,255,0.04)",
-                    borderColor: i === selectedPlan ? "rgba(168,85,247,0.6)" : "rgba(255,255,255,0.08)",
-                  }}
+                  style={{ background: i === selectedPlan ? "rgba(168,85,247,0.12)" : "rgba(255,255,255,0.04)", borderColor: i === selectedPlan ? "rgba(168,85,247,0.6)" : "rgba(255,255,255,0.08)" }}
                 >
                   {p.discount > 0 && (
-                    <div
-                      className="absolute -top-1.5 left-1/2 -translate-x-1/2 text-white text-[8px] font-bold px-1 py-px rounded-full whitespace-nowrap"
-                      style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}
-                    >
+                    <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 text-white text-[8px] font-bold px-1 py-px rounded-full whitespace-nowrap" style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}>
                       {p.discount}% off
                     </div>
                   )}
                   <div className="text-white/60 text-[9px] mt-0.5 leading-tight">{p.label}</div>
-                  <div
-                    className="text-base font-bold leading-tight"
-                    style={{ color: i === selectedPlan ? "#a855f7" : "white" }}
-                  >
-                    ${p.price.toFixed(2)}
+                  <div className="text-sm font-bold leading-tight" style={{ color: i === selectedPlan ? "#a855f7" : "white" }}>
+                    UGX {p.price.toLocaleString()}
                   </div>
-                  <div className="text-white/30 text-[9px] line-through">${p.original.toFixed(2)}</div>
+                  <div className="text-white/30 text-[9px] line-through">UGX {p.original.toLocaleString()}</div>
                 </button>
               ))}
             </div>
 
             <p className="text-white/40 text-[10px] mb-2">· New subscribers get {plan.discount}% off the first term!</p>
 
-            {/* Price + savings row */}
             <div className="flex items-center justify-between mb-2 px-3 py-2 rounded-lg" style={{ background: "rgba(255,255,255,0.04)" }}>
               <div>
                 <div className="text-white/50 text-[10px]">You pay</div>
-                <div className="text-white text-xl font-bold leading-tight">${plan.price.toFixed(2)}</div>
+                <div className="text-white text-base font-bold leading-tight">{fmt(plan.price)}</div>
               </div>
-              <div
-                className="text-white text-[10px] font-semibold px-2.5 py-1 rounded-full"
-                style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}
-              >
-                Save ${saved}
+              <div>
+                <div className="text-white/40 text-[10px]">Pay via</div>
+                <img src="https://pbs.twimg.com/media/Ggq-h4CXEAAv6wk.jpg" alt="Mobile Money" className="h-6 rounded mt-0.5 object-cover" style={{ maxWidth: 70 }} />
+              </div>
+              <div className="text-white text-[10px] font-semibold px-2 py-1 rounded-full" style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}>
+                Save {fmt(saved)}
               </div>
             </div>
 
-            {/* Benefits — 3-column ultra compact */}
             <div className="grid grid-cols-3 gap-1 mb-3">
               {BENEFITS.map((b) => (
                 <div key={b.title} className="flex items-center gap-1 rounded-md px-1.5 py-1" style={{ background: "rgba(255,255,255,0.04)" }}>
@@ -283,12 +267,8 @@ function SubscribeModal({ onClose, isMobile }: { onClose: () => void; isMobile: 
               ))}
             </div>
 
-            {/* Pay button */}
-            <button
-              className="w-full h-10 rounded-xl font-bold text-sm text-white hover:opacity-90 transition-opacity"
-              style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}
-            >
-              Subscribe · Pay ${plan.price.toFixed(2)}
+            <button className="w-full h-10 rounded-xl font-bold text-sm text-white hover:opacity-90 transition-opacity" style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}>
+              Subscribe · {fmt(plan.price)}
             </button>
 
             <div className="flex justify-center gap-3 mt-1.5">
@@ -348,11 +328,10 @@ function SubscribeModal({ onClose, isMobile }: { onClose: () => void; isMobile: 
                   </div>
                 )}
                 <div className="text-white/70 text-xs mb-1 mt-1 leading-tight">{p.label} Subscription</div>
-                <div className="flex items-baseline gap-0.5">
-                  <span className="text-white/60 text-xs align-top mt-1">$</span>
-                  <span className="text-2xl font-bold" style={{ color: i === selectedPlan ? "#a855f7" : "white" }}>{p.price.toFixed(2)}</span>
+                <div className="text-xl font-bold" style={{ color: i === selectedPlan ? "#a855f7" : "white" }}>
+                  UGX {p.price.toLocaleString()}
                 </div>
-                <div className="text-white/30 text-xs line-through mt-0.5">${p.original.toFixed(2)}</div>
+                <div className="text-white/30 text-xs line-through mt-0.5">UGX {p.original.toLocaleString()}</div>
               </button>
             ))}
           </div>
@@ -381,31 +360,30 @@ function SubscribeModal({ onClose, isMobile }: { onClose: () => void; isMobile: 
         </div>
 
         {/* RIGHT PANEL */}
-        <div className="w-56 flex-shrink-0 flex flex-col p-5" style={{ background: "#0e1015", borderLeft: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="w-60 flex-shrink-0 flex flex-col p-5" style={{ background: "#0e1015", borderLeft: "1px solid rgba(255,255,255,0.06)" }}>
           <div className="text-center mb-4">
-            <div className="flex items-baseline justify-center gap-0.5 mb-2">
-              <span className="text-white/60 text-sm align-top mt-1">$</span>
-              <span className="text-5xl font-bold text-white">{plan.price.toFixed(2)}</span>
-            </div>
+            <div className="text-white/50 text-xs mb-1">You pay</div>
+            <div className="text-white font-bold text-2xl mb-2">{fmt(plan.price)}</div>
             <div className="inline-block text-white text-xs font-semibold px-3 py-1 rounded-full" style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}>
-              Saved ${saved}
+              Save {fmt(saved)}
             </div>
           </div>
           <div className="border-t mb-4" style={{ borderColor: "rgba(255,255,255,0.08)" }} />
           <div>
-            <div className="text-white text-xs font-semibold mb-3">Choose Payment Method</div>
-            <div className="rounded-xl p-3 flex flex-col items-center gap-1 border cursor-pointer" style={{ background: "rgba(168,85,247,0.05)", borderColor: "rgba(168,85,247,0.4)" }}>
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: "#1677ff" }}>
-                <svg width="22" height="22" viewBox="0 0 40 40" fill="none">
-                  <path d="M20 6C12.27 6 6 12.27 6 20s6.27 14 14 14 14-6.27 14-14S27.73 6 20 6zm-2.5 18.5l-5-3.5 1.2-1.7 3.3 2.3 7-8.6 1.7 1.4-8.2 10.1z" fill="white"/>
-                </svg>
+            <div className="text-white text-xs font-semibold mb-3">Payment Method</div>
+            <div className="rounded-xl overflow-hidden border cursor-pointer" style={{ borderColor: "rgba(168,85,247,0.4)" }}>
+              <img
+                src="https://pbs.twimg.com/media/Ggq-h4CXEAAv6wk.jpg"
+                alt="Mobile Money"
+                className="w-full object-cover"
+                style={{ maxHeight: 90 }}
+              />
+            </div>
+            <div className="flex items-center justify-center gap-1.5 mt-2">
+              <div className="w-3.5 h-3.5 rounded-full flex items-center justify-center" style={{ background: "#22c55e" }}>
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="white" strokeWidth="3" strokeLinecap="round"/></svg>
               </div>
-              <span className="text-white text-[11px] font-medium">Card / PayPal</span>
-              <div className="w-4 h-4 rounded-full flex items-center justify-center" style={{ background: "#22c55e" }}>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
-                  <path d="M5 13l4 4L19 7" stroke="white" strokeWidth="3" strokeLinecap="round"/>
-                </svg>
-              </div>
+              <span className="text-white/60 text-xs">Mobile Money selected</span>
             </div>
           </div>
           <div className="flex-1" />
@@ -413,7 +391,7 @@ function SubscribeModal({ onClose, isMobile }: { onClose: () => void; isMobile: 
             className="w-full h-11 rounded-xl font-bold text-sm text-white mt-4 hover:opacity-90 transition-opacity"
             style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}
           >
-            Pay now ${plan.price.toFixed(2)}
+            Pay now · {fmt(plan.price)}
           </button>
           <div className="flex justify-center gap-2 mt-3">
             <a href="#" className="text-white/30 text-[10px] hover:text-white/60 transition-colors">VIP Terms</a>
