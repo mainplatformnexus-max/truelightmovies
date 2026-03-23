@@ -6,19 +6,28 @@ import { DownloadBar } from "./components/DownloadBar";
 import { HomePage } from "./pages/Home";
 import { MoviesPage } from "./pages/MoviesPage";
 import { SeriesPage } from "./pages/SeriesPage";
+import { PlayPage } from "./pages/PlayPage";
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeNav, setActiveNav] = useState("home");
 
+  const handlePlay = () => {
+    setActiveNav("play");
+  };
+
+  if (activeNav === "play") {
+    return <PlayPage />;
+  }
+
   const renderContent = () => {
     switch (activeNav) {
       case "movies":
-        return <MoviesPage />;
+        return <MoviesPage onPlay={handlePlay} />;
       case "series":
-        return <SeriesPage />;
+        return <SeriesPage onPlay={handlePlay} />;
       default:
-        return <HomePage />;
+        return <HomePage onPlay={handlePlay} />;
     }
   };
 

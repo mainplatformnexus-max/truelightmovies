@@ -3,9 +3,10 @@ import type { Movie } from "../data/movies";
 
 interface HeroBannerProps {
   movies: Movie[];
+  onPlay?: () => void;
 }
 
-export function HeroBanner({ movies }: HeroBannerProps) {
+export function HeroBanner({ movies, onPlay }: HeroBannerProps) {
   const [current, setCurrent] = useState(0);
   const [imgErrors, setImgErrors] = useState<Record<number, boolean>>({});
 
@@ -86,7 +87,10 @@ export function HeroBanner({ movies }: HeroBannerProps) {
           </div>
 
           <div className="flex items-center gap-3">
-            <button className="hero-btn flex items-center gap-2 gradient-btn px-5 py-2 text-sm font-semibold rounded-full">
+            <button
+              onClick={onPlay}
+              className="hero-btn flex items-center gap-2 gradient-btn px-5 py-2 text-sm font-semibold rounded-full"
+            >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M8 5v14l11-7z"/>
               </svg>

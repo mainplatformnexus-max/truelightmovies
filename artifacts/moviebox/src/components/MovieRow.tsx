@@ -6,9 +6,10 @@ interface MovieRowProps {
   title: string;
   movies: Movie[];
   showAll?: boolean;
+  onPlay?: () => void;
 }
 
-export function MovieRow({ title, movies, showAll = false }: MovieRowProps) {
+export function MovieRow({ title, movies, showAll = false, onPlay }: MovieRowProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const scroll = (direction: "left" | "right") => {
@@ -58,7 +59,7 @@ export function MovieRow({ title, movies, showAll = false }: MovieRowProps) {
         /* Grid layout for "show all" mode */
         <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3 md:gap-4">
           {movies.map((movie) => (
-            <MovieCard key={movie.id} movie={movie} />
+            <MovieCard key={movie.id} movie={movie} onPlay={onPlay} />
           ))}
         </div>
       ) : (
@@ -73,7 +74,7 @@ export function MovieRow({ title, movies, showAll = false }: MovieRowProps) {
               className="movie-row-card flex-shrink-0"
               style={{ width: "calc(30.3% - 0.35rem)", minWidth: "calc(30.3% - 0.35rem)" }}
             >
-              <MovieCard movie={movie} />
+              <MovieCard movie={movie} onPlay={onPlay} />
             </div>
           ))}
         </div>

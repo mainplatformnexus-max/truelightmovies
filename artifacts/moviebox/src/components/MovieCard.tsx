@@ -5,15 +5,17 @@ interface MovieCardProps {
   movie: Movie;
   variant?: "portrait" | "landscape";
   className?: string;
+  onPlay?: () => void;
 }
 
-export function MovieCard({ movie, variant = "portrait", className = "" }: MovieCardProps) {
+export function MovieCard({ movie, variant = "portrait", className = "", onPlay }: MovieCardProps) {
   const [imgError, setImgError] = useState(false);
 
   if (variant === "landscape") {
     return (
       <a
         href="#"
+        onClick={(e) => { e.preventDefault(); onPlay?.(); }}
         className={`movie-card flex-shrink-0 cursor-pointer group ${className}`}
         style={{ width: "calc(50% - 0.5rem)" }}
       >
@@ -51,6 +53,7 @@ export function MovieCard({ movie, variant = "portrait", className = "" }: Movie
   return (
     <a
       href="#"
+      onClick={(e) => { e.preventDefault(); onPlay?.(); }}
       className={`movie-card flex-shrink-0 cursor-pointer group relative ${className}`}
     >
       <div className="relative bg-[#2b2e39] rounded-lg overflow-hidden" style={{ aspectRatio: "2/3" }}>
