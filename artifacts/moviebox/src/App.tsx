@@ -8,6 +8,7 @@ import { MoviesPage } from "./pages/MoviesPage";
 import { SeriesPage } from "./pages/SeriesPage";
 import { PlayPage } from "./pages/PlayPage";
 import { VJDashboard } from "./pages/VJDashboard";
+import { AdminDashboard } from "./pages/AdminDashboard";
 import type { Movie } from "./data/movies";
 import { featuredMovies } from "./data/movies";
 
@@ -27,6 +28,10 @@ function App() {
 
   if (activeNav === "vj-dashboard") {
     return <VJDashboard onBack={() => setActiveNav("home")} />;
+  }
+
+  if (activeNav === "admin-dashboard") {
+    return <AdminDashboard onBack={() => setActiveNav("home")} />;
   }
 
   if (activeNav === "play") {

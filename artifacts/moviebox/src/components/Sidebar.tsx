@@ -134,7 +134,7 @@ export function Sidebar({ isOpen, onClose, activeNav, onNavChange }: SidebarProp
         </nav>
 
         {/* VJ Dashboard */}
-        <div className="mx-3 mb-3">
+        <div className="mx-3 mb-1">
           <button
             onClick={() => { onNavChange("vj-dashboard"); onClose(); }}
             className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg text-left transition-colors ${activeNav === "vj-dashboard" ? "nav-active" : "hover:bg-white/10"}`}
@@ -143,6 +143,19 @@ export function Sidebar({ isOpen, onClose, activeNav, onNavChange }: SidebarProp
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
             </span>
             <span className={`text-base font-bold leading-5 nav-title ${activeNav === "vj-dashboard" ? "" : "text-white/80"}`}>VJ Dashboard</span>
+          </button>
+        </div>
+
+        {/* Admin Dashboard */}
+        <div className="mx-3 mb-3">
+          <button
+            onClick={() => { onNavChange("admin-dashboard"); onClose(); }}
+            className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg text-left transition-colors ${activeNav === "admin-dashboard" ? "nav-active" : "hover:bg-white/10"}`}
+          >
+            <span className={`flex-shrink-0 ${activeNav === "admin-dashboard" ? "text-[#a855f7]" : "text-white/80"}`}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
+            </span>
+            <span className={`text-base font-bold leading-5 nav-title ${activeNav === "admin-dashboard" ? "" : "text-white/80"}`}>Admin Dashboard</span>
           </button>
         </div>
 
