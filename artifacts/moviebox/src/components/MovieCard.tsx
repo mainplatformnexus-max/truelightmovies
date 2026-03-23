@@ -83,7 +83,7 @@ export function MovieCard({ movie, variant = "portrait", className = "" }: Movie
 
         {/* Series badge */}
         {movie.type === "series" && (
-          <div className="absolute top-1.5 right-1.5 bg-[#1cb7ff]/90 rounded px-1 py-0.5 text-white text-xs font-bold leading-none">
+          <div className="absolute top-1.5 right-1.5 bg-[#a855f7]/90 rounded px-1 py-0.5 text-white text-xs font-bold leading-none">
             TV
           </div>
         )}

@@ -139,7 +139,7 @@ export function HeroBanner({ movies }: HeroBannerProps) {
             key={m.id}
             onClick={() => setCurrent(i)}
             className={`relative rounded overflow-hidden transition-all duration-300 ${
-              i === current ? "ring-2 ring-[#1cb7ff]" : "opacity-60 hover:opacity-90"
+              i === current ? "ring-2 ring-[#a855f7]" : "opacity-60 hover:opacity-90"
             }`}
             style={{ width: 60, height: 36 }}
           >

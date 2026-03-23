@@ -43,7 +43,7 @@ function App() {
           <Header onMenuToggle={() => setSidebarOpen(true)} />
 
           {/* Page content - with top padding to avoid header overlap on mobile */}
-          <main className="pt-10">
+          <main className="pt-12 md:pt-10">
             {renderContent()}
           </main>
         </div>

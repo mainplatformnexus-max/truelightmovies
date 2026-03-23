@@ -13,8 +13,8 @@ export function DownloadBar() {
             <rect width="40" height="45" rx="8" fill="url(#dlGrad)"/>
             <defs>
               <linearGradient id="dlGrad" x1="0" y1="0" x2="40" y2="45" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#1cb7ff"/>
-                <stop offset="1" stopColor="#2ff58b"/>
+                <stop stopColor="#a855f7"/>
+                <stop offset="1" stopColor="#ec4899"/>
               </linearGradient>
             </defs>
             <text x="50%" y="55%" dominantBaseline="middle" textAnchor="middle" fill="#101114" fontSize="20" fontWeight="bold">M</text>
@@ -28,8 +28,8 @@ export function DownloadBar() {
           <rect width="40" height="45" rx="8" fill="url(#dlGrad2)"/>
           <defs>
             <linearGradient id="dlGrad2" x1="0" y1="0" x2="40" y2="45" gradientUnits="userSpaceOnUse">
-              <stop stopColor="#1cb7ff"/>
-              <stop offset="1" stopColor="#2ff58b"/>
+              <stop stopColor="#a855f7"/>
+              <stop offset="1" stopColor="#ec4899"/>
             </linearGradient>
           </defs>
           <text x="50%" y="55%" dominantBaseline="middle" textAnchor="middle" fill="#101114" fontSize="20" fontWeight="bold">M</text>

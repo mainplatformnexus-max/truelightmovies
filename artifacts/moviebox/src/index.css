@@ -98,7 +98,7 @@
 
 /* Gradient text */
 .gradient-text {
-  background: linear-gradient(91deg, #1cb7ff 1.22%, #2ff58b 50.24%);
+  background: linear-gradient(91deg, #a855f7 1.22%, #ec4899 50.24%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -107,8 +107,8 @@
 
 /* Gradient button */
 .gradient-btn {
-  background: linear-gradient(91deg, #1cb7ff 1.22%, #2ff58b 50.24%);
-  color: #101114;
+  background: linear-gradient(91deg, #a855f7 1.22%, #ec4899 50.24%);
+  color: #fff;
   border-radius: 30px;
 }
 
@@ -171,7 +171,7 @@
 
 /* Active nav item gradient */
 .nav-active .nav-title {
-  background: linear-gradient(91deg, #1cb7ff 1.22%, #2ff58b 50.24%);
+  background: linear-gradient(91deg, #a855f7 1.22%, #ec4899 50.24%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -205,7 +205,7 @@
   cursor: pointer;
 }
 .swiper-bullet.active {
-  background: #1cb7ff;
+  background: #a855f7;
   width: 24px;
   border-radius: 4px;
 }

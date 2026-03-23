@@ -98,8 +98,8 @@ export function Sidebar({ isOpen, onClose, activeNav, onNavChange }: SidebarProp
                 <rect width="40" height="45" rx="8" fill="url(#sidebarGrad)"/>
                 <defs>
                   <linearGradient id="sidebarGrad" x1="0" y1="0" x2="40" y2="45" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#1cb7ff"/>
-                    <stop offset="1" stopColor="#2ff58b"/>
+                    <stop stopColor="#a855f7"/>
+                    <stop offset="1" stopColor="#ec4899"/>
                   </linearGradient>
                 </defs>
                 <text x="50%" y="55%" dominantBaseline="middle" textAnchor="middle" fill="#101114" fontSize="20" fontWeight="bold">M</text>
@@ -125,7 +125,7 @@ export function Sidebar({ isOpen, onClose, activeNav, onNavChange }: SidebarProp
                 }`}
                 style={{ width: "calc(100% - 0px)" }}
               >
-                <span className={`flex-shrink-0 ${activeNav === item.id ? "text-[#1cb7ff]" : "text-white/80"}`}>
+                <span className={`flex-shrink-0 ${activeNav === item.id ? "text-[#a855f7]" : "text-white/80"}`}>
                   {item.icon}
                 </span>
                 <span

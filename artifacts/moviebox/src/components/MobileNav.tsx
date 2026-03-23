@@ -92,7 +92,7 @@ export function MobileNav({ activeNav, onNavChange }: MobileNavProps) {
                 onClick={() => onNavChange(item.id)}
                 className="flex flex-col items-center gap-0.5 w-full py-2"
               >
-                <span className={isActive ? "text-[#1cb7ff]" : "text-white/50"}>
+                <span className={isActive ? "text-[#a855f7]" : "text-white/50"}>
                   {isActive ? item.activeIcon : item.normalIcon}
                 </span>
                 <span
