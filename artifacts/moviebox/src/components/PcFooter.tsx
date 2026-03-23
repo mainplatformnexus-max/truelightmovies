@@ -1,12 +1,12 @@
 export function PcFooter() {
   const friendLinks = [
-    { label: "Free Movies", href: "#" },
-    { label: "123Movies", href: "#" },
-    { label: "Movies Online", href: "#" },
-    { label: "Movie4k", href: "#" },
-    { label: "Watch Movies Online Free", href: "#" },
-    { label: "Watch Series", href: "#" },
-    { label: "Fmovies", href: "#" },
+    { label: "Free Movies", href: "https://luofilm.site" },
+    { label: "123Movies", href: "https://luowatch.xyz" },
+    { label: "Movies Online", href: "https://luoancientmovies.com" },
+    { label: "Movie4k", href: "https://vjpilesug.com" },
+    { label: "Watch Movies Online Free", href: "https://vjdimpozmovies.xyz" },
+    { label: "Watch Series", href: "https://betmali.site" },
+    { label: "Fmovies", href: "https://nexusplatform.site" },
   ];
 
   const policyLinks = [
@@ -25,6 +25,8 @@ export function PcFooter() {
           <span key={link.label} className="flex items-center">
             <a
               href={link.href}
+              target="_blank"
+              rel="noreferrer"
               className="text-white/60 text-xs hover:text-white transition-colors"
             >
               {link.label}
@@ -54,16 +56,16 @@ export function PcFooter() {
       </div>
 
       <a
-        href="mailto:moviebox.ng@mbox.ng"
+        href="mailto:mainplatform.nexus@gmail.com"
         className="text-white/60 text-xs hover:text-white transition-colors mb-3"
         target="_blank"
         rel="noreferrer"
       >
-        Service Email: moviebox.ng@mbox.ng
+        Service Email: mainplatform.nexus@gmail.com
       </a>
 
       <p className="text-white/40 text-xs text-center">
-        © 2024 MovieBox. All Rights Reserved. This site does not store any files on our server.
+        © 2024–2027 MovieBox. All Rights Reserved. This site does not store any files on our server.
       </p>
     </footer>
   );
