@@ -69,7 +69,7 @@ export function MovieCard({ movie, variant = "portrait", className = "" }: Movie
 
         {/* Hover overlay */}
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex flex-col justify-end p-2 opacity-0 group-hover:opacity-100">
-          <button className="w-full gradient-btn py-1.5 text-xs font-semibold text-[#101114] rounded-full mb-1">
+          <button className="w-full gradient-btn py-1 text-[10px] font-semibold rounded-full mb-1 whitespace-nowrap overflow-hidden">
             ▶ Watch Now
           </button>
         </div>

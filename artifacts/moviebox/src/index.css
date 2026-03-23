@@ -235,11 +235,6 @@
     font-size: 0.65rem !important;
   }
 
-  /* Smaller gradient-btn on mobile */
-  .gradient-btn {
-    font-size: 0.7rem !important;
-    padding: 4px 10px !important;
-  }
 }
 
 /* Swiper bullet */
