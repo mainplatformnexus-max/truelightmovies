@@ -125,7 +125,7 @@ export function SubscribeModal({ onClose, isMobile }: { onClose: () => void; isM
         body: JSON.stringify({
           msisdn,
           amount: plan.price,
-          description: `MovieBox ${plan.label} Subscription`,
+          description: `True Light Movie ${plan.label} Subscription`,
         }),
       });
       const depositData = await depositRes.json();

@@ -58,20 +58,19 @@ export function HomePage({ onPlay }: HomePageProps) {
               ) : (
                 <div className="w-full h-full" style={{ background: `linear-gradient(135deg, #1a2a4a ${i * 20}%, #0d1520 100%)` }} />
               )}
-              <div className="absolute inset-0 bg-gradient-to-r from-[#101114] via-[#101114]/60 to-transparent" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#101114] via-transparent to-transparent" />
             </div>
           ))}
 
           {carouselItem && (
-            <div className="absolute inset-0 flex items-center">
-              <div className="px-6 max-w-lg">
-                <h2 className="text-white text-2xl md:text-3xl font-bold leading-tight mb-2 line-clamp-2">{carouselItem.title}</h2>
+            <div className="absolute inset-0 flex items-end md:items-center">
+              <div className="w-full px-3 md:px-6 pb-8 md:pb-0 md:max-w-lg"
+                style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%)" }}>
+                <h2 className="text-white text-base md:text-2xl font-bold leading-tight mb-1 line-clamp-2">{carouselItem.title}</h2>
                 {carouselItem.subtitle && (
-                  <p className="text-white/60 text-sm mb-4 line-clamp-2">{carouselItem.subtitle}</p>
+                  <p className="text-white/70 text-xs md:text-sm mb-2 line-clamp-1 md:line-clamp-2">{carouselItem.subtitle}</p>
                 )}
                 {carouselItem.buttonText && (
-                  <button className="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white rounded-full" style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}>
+                  <button className="flex items-center gap-1.5 px-3 py-1 md:px-5 md:py-2 text-xs md:text-sm font-semibold text-white rounded-full" style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}>
                     {carouselItem.buttonText}
                   </button>
                 )}
@@ -81,15 +80,15 @@ export function HomePage({ onPlay }: HomePageProps) {
 
           {carouselItems.length > 1 && (
             <>
-              <button onClick={() => setCurrent(c => (c - 1 + carouselItems.length) % carouselItems.length)} className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/40 hover:bg-black/60 rounded-full flex items-center justify-center text-white transition-colors">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+              <button onClick={() => setCurrent(c => (c - 1 + carouselItems.length) % carouselItems.length)} className="absolute left-1.5 top-1/2 -translate-y-1/2 w-6 h-6 md:w-8 md:h-8 bg-black/40 hover:bg-black/60 rounded-full flex items-center justify-center text-white transition-colors">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M15 18l-6-6 6-6"/></svg>
               </button>
-              <button onClick={() => setCurrent(c => (c + 1) % carouselItems.length)} className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/40 hover:bg-black/60 rounded-full flex items-center justify-center text-white transition-colors">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 18l6-6-6-6"/></svg>
+              <button onClick={() => setCurrent(c => (c + 1) % carouselItems.length)} className="absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 md:w-8 md:h-8 bg-black/40 hover:bg-black/60 rounded-full flex items-center justify-center text-white transition-colors">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 18l6-6-6-6"/></svg>
               </button>
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+              <div className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1">
                 {carouselItems.map((_, i) => (
-                  <button key={i} onClick={() => setCurrent(i)} className={`transition-all duration-300 rounded-full ${i === current ? "w-4 h-1.5 bg-white" : "w-1.5 h-1.5 bg-white/40"}`} />
+                  <button key={i} onClick={() => setCurrent(i)} className={`transition-all duration-300 rounded-full ${i === current ? "w-3 h-1 md:w-4 md:h-1.5 bg-white" : "w-1 h-1 md:w-1.5 md:h-1.5 bg-white/40"}`} />
                 ))}
               </div>
             </>

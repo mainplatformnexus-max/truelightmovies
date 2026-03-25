@@ -703,7 +703,7 @@ function WalletSection({ transactions }: { transactions: Transaction[] }) {
         body: JSON.stringify({
           msisdn,
           amount: amountNum,
-          description: "MovieBox VJ Earnings Withdrawal",
+          description: "True Light Movie VJ Earnings Withdrawal",
         }),
       });
       const data = await res.json();

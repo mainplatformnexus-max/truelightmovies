@@ -109,7 +109,7 @@ export function downloadContent(url: string, title: string) {
 
 export async function shareContent(title: string, url?: string) {
   const shareUrl = url || window.location.href;
-  const shareData = { title: `Watch "${title}" on MovieBox`, url: shareUrl };
+  const shareData = { title: `Watch "${title}" on True Light Movie`, url: shareUrl };
   try {
     if (navigator.share && navigator.canShare?.(shareData)) {
       await navigator.share(shareData);
