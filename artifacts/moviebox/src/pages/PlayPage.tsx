@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { ContentItem, EpisodeItem } from "../lib/types";
 import { useContent } from "../lib/useContent";
 import { useAuth } from "../contexts/AuthContext";
 import { SubscribeModal } from "../components/SubscribeModal";
+import { useUserActions, recordWatchHistory, downloadContent, shareContent } from "../lib/useUserActions";
 
 interface PlayPageProps {
   movie: ContentItem;
@@ -39,6 +40,8 @@ export function PlayPage({ movie, onBack }: PlayPageProps) {
   const [showSubModal, setShowSubModal] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [shareToast, setShareToast] = useState("");
+  const historyRecorded = useRef(false);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -46,13 +49,13 @@ export function PlayPage({ movie, onBack }: PlayPageProps) {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  const [liked, setLiked] = useState(false);
-  const [inList, setInList] = useState(false);
   const [progress] = useState(0);
   const [activeTab, setActiveTab] = useState<"episodes" | "related">(movie.type === "series" ? "episodes" : "related");
   const [selectedEp, setSelectedEp] = useState(1);
   const [backdropErr, setBackdropErr] = useState(false);
   const [activeMovie, setActiveMovie] = useState<ContentItem>(movie);
+
+  const { liked, inList, toggleLike, toggleList } = useUserActions(profile?.uid, activeMovie.id);
 
   const seriesEpisodes: EpisodeItem[] = allEpisodes.filter(e => e.seriesId === activeMovie.id);
   const episodeCount = seriesEpisodes.length > 0 ? seriesEpisodes.length : (activeMovie.seasons ?? 1) * 10;
@@ -79,6 +82,7 @@ export function PlayPage({ movie, onBack }: PlayPageProps) {
     setBackdropErr(false);
     setSelectedEp(1);
     setActiveTab(m.type === "series" ? "episodes" : "related");
+    historyRecorded.current = false;
   };
 
   const requireSub = (cb: () => void) => {
@@ -86,9 +90,60 @@ export function PlayPage({ movie, onBack }: PlayPageProps) {
     cb();
   };
 
+  const handlePlay = () => {
+    requireSub(() => {
+      setIsPlaying(!isPlaying);
+    });
+  };
+
+  const handleVideoPlay = () => {
+    setIsPlaying(true);
+    if (isSubscribed && profile?.uid && !historyRecorded.current) {
+      historyRecorded.current = true;
+      recordWatchHistory(profile.uid, activeMovie);
+    }
+  };
+
+  const handleDownload = () => {
+    requireSub(() => {
+      if (activeMovie.url) {
+        downloadContent(activeMovie.url, activeMovie.title);
+      }
+    });
+  };
+
+  const handleShare = async () => {
+    const result = await shareContent(activeMovie.title, window.location.href);
+    if (result === "copied") {
+      setShareToast("Link copied!");
+      setTimeout(() => setShareToast(""), 2500);
+    } else if (result === "shared") {
+      setShareToast("Shared!");
+      setTimeout(() => setShareToast(""), 2500);
+    }
+  };
+
+  const handleLike = () => {
+    if (!profile) { setShowSubModal(true); return; }
+    toggleLike(activeMovie);
+  };
+
+  const handleList = () => {
+    if (!profile) { setShowSubModal(true); return; }
+    toggleList(activeMovie);
+  };
+
   return (
     <div className="fixed inset-0 z-[9999] bg-[#101114] text-white overflow-y-auto">
       {showSubModal && <SubscribeModal onClose={() => setShowSubModal(false)} isMobile={isMobile} />}
+
+      {/* Share toast */}
+      {shareToast && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[10000] px-4 py-2 rounded-full text-white text-xs font-semibold shadow-lg"
+          style={{ background: "rgba(168,85,247,0.9)", backdropFilter: "blur(8px)" }}>
+          {shareToast}
+        </div>
+      )}
 
       {/* VIDEO PLAYER */}
       <div className="relative w-full bg-black" style={{ aspectRatio: "16/9" }}>
@@ -99,7 +154,7 @@ export function PlayPage({ movie, onBack }: PlayPageProps) {
             className="w-full h-full object-contain"
             controls
             autoPlay={isPlaying}
-            onPlay={() => setIsPlaying(true)}
+            onPlay={handleVideoPlay}
             onPause={() => setIsPlaying(false)}
           />
         ) : (
@@ -111,13 +166,11 @@ export function PlayPage({ movie, onBack }: PlayPageProps) {
             )}
             <div className="absolute inset-0 flex items-center justify-center">
               <button
-                onClick={() => requireSub(() => setIsPlaying(!isPlaying))}
+                onClick={handlePlay}
                 className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30 active:scale-95 transition-transform"
               >
                 {!isSubscribed ? (
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
-                ) : isPlaying ? (
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
                 ) : (
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
                 )}
@@ -140,7 +193,6 @@ export function PlayPage({ movie, onBack }: PlayPageProps) {
           <div className="w-8 h-8 flex-shrink-0" />
         </div>
 
-        {/* Progress bar fallback (no url or locked) */}
         {(!isSubscribed || !activeMovie.url) && (
           <div className="absolute bottom-0 left-0 right-0 px-3 pb-3 pt-10 pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85), transparent)" }}>
             <div className="relative w-full h-1 bg-white/30 rounded-full mb-2">
@@ -185,16 +237,23 @@ export function PlayPage({ movie, onBack }: PlayPageProps) {
 
         {/* Action buttons */}
         <div className="flex items-center justify-around py-3 mb-5 bg-white/5 rounded-2xl">
-          <button onClick={() => setLiked(!liked)} className="flex flex-col items-center gap-1.5">
+          {/* Like */}
+          <button onClick={handleLike} className="flex flex-col items-center gap-1.5">
             <svg width="22" height="22" viewBox="0 0 24 24" fill={liked ? "#ec4899" : "none"} stroke={liked ? "#ec4899" : "rgba(255,255,255,0.7)"} strokeWidth="2">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
             </svg>
-            <span className="text-white/50 text-[10px]">Like</span>
+            <span className={`text-[10px] ${liked ? "text-pink-400" : "text-white/50"}`}>
+              {liked ? "Liked" : "Like"}
+            </span>
           </button>
 
-          <button onClick={() => requireSub(() => {})} className="flex flex-col items-center gap-1.5 relative">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isSubscribed ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.35)"} strokeWidth="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          {/* Download */}
+          <button onClick={handleDownload} className="flex flex-col items-center gap-1.5 relative">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+              stroke={isSubscribed ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.35)"} strokeWidth="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
             </svg>
             {!isSubscribed && (
               <svg width="10" height="10" viewBox="0 0 24 24" fill="rgba(168,85,247,0.8)" className="absolute top-0 right-0">
@@ -204,21 +263,31 @@ export function PlayPage({ movie, onBack }: PlayPageProps) {
             <span className="text-white/50 text-[10px]">Download</span>
           </button>
 
-          <button className="flex flex-col items-center gap-1.5">
+          {/* Share */}
+          <button onClick={handleShare} className="flex flex-col items-center gap-1.5 relative">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2">
               <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
             </svg>
             <span className="text-white/50 text-[10px]">Share</span>
           </button>
 
-          <button onClick={() => setInList(!inList)} className="flex flex-col items-center gap-1.5">
+          {/* My List */}
+          <button onClick={handleList} className="flex flex-col items-center gap-1.5">
             {inList ? (
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="#a855f7" stroke="#a855f7" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="#a855f7" stroke="#a855f7" strokeWidth="2">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
             ) : (
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
             )}
-            <span className="text-white/50 text-[10px]">My List</span>
+            <span className={`text-[10px] ${inList ? "text-purple-400" : "text-white/50"}`}>
+              {inList ? "In List" : "My List"}
+            </span>
           </button>
         </div>
 
