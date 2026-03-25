@@ -14,6 +14,7 @@ import type { ContentItem } from "./lib/types";
 import { useAuth } from "./contexts/AuthContext";
 
 const ADMIN_EMAIL = "mainplatform.nexus@gmail.com";
+const VJ_EMAIL = "vjemmatruelightstudios@gmail.com";
 
 function App() {
   const { profile, loading } = useAuth();
@@ -22,12 +23,19 @@ function App() {
   const [selectedMovie, setSelectedMovie] = useState<ContentItem | null>(null);
 
   const isAdmin = profile?.email === ADMIN_EMAIL;
+  const isVJ = profile?.email === VJ_EMAIL;
+  const canAccessVJDashboard = isVJ || isAdmin;
 
   useEffect(() => {
-    if (!loading && activeNav === "admin-dashboard" && !isAdmin) {
-      setActiveNav("home");
+    if (!loading) {
+      if (activeNav === "admin-dashboard" && !isAdmin) {
+        setActiveNav("home");
+      }
+      if (activeNav === "vj-dashboard" && !canAccessVJDashboard) {
+        setActiveNav("home");
+      }
     }
-  }, [activeNav, isAdmin, loading]);
+  }, [activeNav, isAdmin, canAccessVJDashboard, loading]);
 
   const handlePlay = (movie: ContentItem) => {
     setSelectedMovie(movie);
@@ -38,7 +46,7 @@ function App() {
     setActiveNav("home");
   };
 
-  if (activeNav === "vj-dashboard") {
+  if (activeNav === "vj-dashboard" && canAccessVJDashboard) {
     return <VJDashboard onBack={() => setActiveNav("home")} />;
   }
 
@@ -59,6 +67,7 @@ function App() {
           activeNav={activeNav}
           onNavChange={setActiveNav}
           isAdmin={isAdmin}
+          canAccessVJDashboard={canAccessVJDashboard}
         />
         <div className="md:ml-[200px] min-h-screen">
           <Header onMenuToggle={() => setSidebarOpen(true)} />
@@ -90,6 +99,7 @@ function App() {
         activeNav={activeNav}
         onNavChange={setActiveNav}
         isAdmin={isAdmin}
+        canAccessVJDashboard={canAccessVJDashboard}
       />
       <div className="md:ml-[200px] min-h-screen">
         <Header onMenuToggle={() => setSidebarOpen(true)} />

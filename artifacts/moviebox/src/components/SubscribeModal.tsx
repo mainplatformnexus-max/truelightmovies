@@ -89,6 +89,7 @@ export function SubscribeModal({ onClose, isMobile }: { onClose: () => void; isM
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const payStatusRef = useRef<PayStatus>("idle");
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isDoneRef = useRef(false);
 
   const updatePayStatus = (s: PayStatus) => {
     payStatusRef.current = s;
@@ -114,6 +115,7 @@ export function SubscribeModal({ onClose, isMobile }: { onClose: () => void; isM
     const msisdn = formatMsisdn(cleaned);
     setError("");
     setLoading(true);
+    isDoneRef.current = false;
     updatePayStatus("initiating");
 
     try {
@@ -141,14 +143,17 @@ export function SubscribeModal({ onClose, isMobile }: { onClose: () => void; isM
       updatePayStatus("pending");
 
       const poll = async () => {
+        if (isDoneRef.current) return;
         try {
           const statusRes = await fetch(`${API_BASE}/api/request-status?internal_reference=${encodeURIComponent(internalRef)}`);
           const statusData = await statusRes.json();
           console.log("Payment status:", statusData);
 
+          if (isDoneRef.current) return;
           const d = statusData.data ?? statusData;
 
           if (d.request_status === "success" || (d.success === true && d.status === "success")) {
+            isDoneRef.current = true;
             if (pollingRef.current) clearInterval(pollingRef.current);
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
             try {
@@ -167,6 +172,7 @@ export function SubscribeModal({ onClose, isMobile }: { onClose: () => void; isM
             d.request_status === "cancelled" ||
             d.status === "cancelled"
           ) {
+            isDoneRef.current = true;
             if (pollingRef.current) clearInterval(pollingRef.current);
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
             setError(d.message || "Payment was declined or failed. Please try again.");
