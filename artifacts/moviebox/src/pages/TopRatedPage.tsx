@@ -140,34 +140,34 @@ export function TopRatedPage({ onPlay }: { onPlay?: (m: ContentItem) => void }) 
       </div>
 
       {/* Controls */}
-      <div className="flex items-center gap-3 mb-6 flex-wrap">
-        <div className="flex gap-1.5">
+      <div className="flex items-center gap-1.5 md:gap-3 mb-4 flex-wrap">
+        <div className="flex gap-1">
           {(["all", "movie", "series"] as const).map((id) => (
             <button
               key={id}
               onClick={() => setFilter(id)}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+              className="px-2 py-0.5 md:px-3 md:py-1.5 rounded-lg text-[10px] md:text-xs font-semibold transition-colors"
               style={filter === id
                 ? { background: "linear-gradient(90deg,#a855f7,#ec4899)", color: "white" }
                 : { background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)" }
               }
             >
-              {id === "all" ? "All" : id === "movie" ? "Movies" : "TV Shows"}
+              {id === "all" ? "All" : id === "movie" ? "Movies" : "TV"}
             </button>
           ))}
         </div>
-        <div className="flex gap-1.5 ml-auto">
+        <div className="flex gap-1 ml-auto">
           {(["views", "popular", "newest"] as const).map((id) => (
             <button
               key={id}
               onClick={() => setSortMode(id)}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+              className="px-2 py-0.5 md:px-3 md:py-1.5 rounded-lg text-[10px] md:text-xs font-medium transition-colors"
               style={sortMode === id
                 ? { background: "rgba(168,85,247,0.2)", color: "#a855f7", border: "1px solid rgba(168,85,247,0.4)" }
                 : { background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.5)", border: "1px solid transparent" }
               }
             >
-              {id === "views" ? "Most Viewed" : id === "popular" ? "Popular" : "Newest"}
+              {id === "views" ? "Views" : id === "popular" ? "Popular" : "Newest"}
             </button>
           ))}
         </div>

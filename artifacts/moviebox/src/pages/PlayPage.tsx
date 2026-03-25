@@ -3,6 +3,7 @@ import type { ContentItem, EpisodeItem } from "../lib/types";
 import { useContent } from "../lib/useContent";
 import { useAuth } from "../contexts/AuthContext";
 import { SubscribeModal } from "../components/SubscribeModal";
+import { VideoPlayer } from "../components/VideoPlayer";
 import { useUserActions, recordWatchHistory, downloadContent, shareContent } from "../lib/useUserActions";
 
 interface PlayPageProps {
