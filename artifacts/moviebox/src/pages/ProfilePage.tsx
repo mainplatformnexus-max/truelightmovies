@@ -102,8 +102,8 @@ export function ProfilePage() {
             <img src={profile.photoURL} alt="" className="w-full h-full object-cover" />
           ) : initials}
         </div>
-        <h1 className="text-white font-bold text-xl mt-3 leading-tight">{profile.displayName}</h1>
-        <p className="text-white/40 text-sm mt-0.5">{profile.email}</p>
+        <h1 className="text-white font-bold text-base md:text-xl mt-2 leading-tight">{profile.displayName}</h1>
+        <p className="text-white/40 text-xs md:text-sm mt-0.5">{profile.email}</p>
         <span className="mt-2 text-xs font-semibold px-3 py-0.5 rounded-full capitalize" style={{ background: "rgba(168,85,247,0.15)", color: "#c084fc" }}>
           {profile.role === "vj" ? "VJ Creator" : profile.role === "admin" ? "Admin" : "Member"}
         </span>

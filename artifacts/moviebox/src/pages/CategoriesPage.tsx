@@ -68,8 +68,8 @@ export function CategoriesPage({ onPlay }: { onPlay?: (m: ContentItem) => void }
   return (
     <div className="px-4 md:px-6 pt-4 pb-28 md:pb-10">
       <div className="mb-5">
-        <h1 className="text-white text-xl font-bold mb-1">Browse Categories</h1>
-        <p className="text-white/40 text-sm">{all.length} titles available</p>
+        <h1 className="text-white text-sm md:text-xl font-bold mb-0.5">Browse Categories</h1>
+        <p className="text-white/40 text-xs md:text-sm">{all.length} titles available</p>
       </div>
 
       {/* Search */}

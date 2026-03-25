@@ -62,19 +62,17 @@ export function HomePage({ onPlay }: HomePageProps) {
           ))}
 
           {carouselItem && (
-            <div className="absolute inset-0 flex items-end md:items-center">
-              <div className="w-full px-3 md:px-6 pb-8 md:pb-0 md:max-w-lg"
-                style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%)" }}>
-                <h2 className="text-white text-base md:text-2xl font-bold leading-tight mb-1 line-clamp-2">{carouselItem.title}</h2>
-                {carouselItem.subtitle && (
-                  <p className="text-white/70 text-xs md:text-sm mb-2 line-clamp-1 md:line-clamp-2">{carouselItem.subtitle}</p>
-                )}
-                {carouselItem.buttonText && (
-                  <button className="flex items-center gap-1.5 px-3 py-1 md:px-5 md:py-2 text-xs md:text-sm font-semibold text-white rounded-full" style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}>
-                    {carouselItem.buttonText}
-                  </button>
-                )}
-              </div>
+            <div className="absolute bottom-0 left-0 right-0 px-3 md:px-6 pt-8 md:pt-12 pb-7 md:pb-5"
+              style={{ background: "linear-gradient(to top, rgba(0,0,0,0.72) 0%, transparent 100%)" }}>
+              <h2 className="text-white text-sm md:text-2xl font-bold leading-tight mb-1 line-clamp-1 md:line-clamp-2">{carouselItem.title}</h2>
+              {carouselItem.subtitle && (
+                <p className="text-white/70 text-[9px] md:text-sm mb-2 line-clamp-1">{carouselItem.subtitle}</p>
+              )}
+              {carouselItem.buttonText && (
+                <button className="flex items-center gap-1 px-3 py-0.5 md:px-5 md:py-2 text-[10px] md:text-sm font-semibold text-white rounded-full" style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}>
+                  {carouselItem.buttonText}
+                </button>
+              )}
             </div>
           )}
 

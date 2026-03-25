@@ -29,7 +29,7 @@ export function SeriesPage({ onPlay }: SeriesPageProps) {
   return (
     <div className="pt-4">
       <div className="px-3 md:px-0">
-        <h1 className="text-white text-xl font-bold mb-6">TV Shows</h1>
+        <h1 className="text-white text-sm md:text-xl font-bold mb-3 md:mb-6">TV Shows</h1>
         {series.length === 0 && (
           <div className="text-center py-20">
             <div className="text-white/20 text-5xl mb-3">📺</div>

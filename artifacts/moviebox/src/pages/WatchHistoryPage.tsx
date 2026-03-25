@@ -134,8 +134,8 @@ export function WatchHistoryPage({ onPlay }: { onPlay?: (contentId: string) => v
     <div className="px-4 md:px-6 pt-4 pb-28 md:pb-10">
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h1 className="text-white text-xl font-bold mb-1">Watch History</h1>
-          <p className="text-white/40 text-sm">{history.length} titles watched</p>
+          <h1 className="text-white text-sm md:text-xl font-bold mb-0.5">Watch History</h1>
+          <p className="text-white/40 text-xs md:text-sm">{history.length} titles watched</p>
         </div>
         {history.length > 0 && (
           <button

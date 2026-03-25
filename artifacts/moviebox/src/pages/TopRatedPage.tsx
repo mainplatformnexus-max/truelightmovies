@@ -135,8 +135,8 @@ export function TopRatedPage({ onPlay }: { onPlay?: (m: ContentItem) => void }) 
   return (
     <div className="px-4 md:px-6 pt-4 pb-28 md:pb-10">
       <div className="mb-5">
-        <h1 className="text-white text-xl font-bold mb-1">Top Rated</h1>
-        <p className="text-white/40 text-sm">Best content ranked by popularity</p>
+        <h1 className="text-white text-sm md:text-xl font-bold mb-0.5">Top Rated</h1>
+        <p className="text-white/40 text-xs md:text-sm">Best content ranked by popularity</p>
       </div>
 
       {/* Controls */}
