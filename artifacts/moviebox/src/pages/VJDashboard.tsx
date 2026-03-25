@@ -662,6 +662,16 @@ function UsersSection({ users }: { users: User[] }) {
   );
 }
 
+const PAYMENT_API_BASE = "https://function-bun-production-ac72.up.railway.app";
+
+function formatWithdrawMsisdn(raw: string): string {
+  const cleaned = raw.replace(/\s+/g, "").replace(/[^0-9+]/g, "");
+  if (cleaned.startsWith("+256")) return cleaned;
+  if (cleaned.startsWith("256")) return "+" + cleaned;
+  if (cleaned.startsWith("0")) return "+256" + cleaned.slice(1);
+  return "+256" + cleaned;
+}
+
 function WalletSection({ transactions }: { transactions: Transaction[] }) {
   const { profile } = useAuth();
   const [showWithdraw, setShowWithdraw] = useState(false);
@@ -670,27 +680,58 @@ function WalletSection({ transactions }: { transactions: Transaction[] }) {
   const [filter, setFilter] = useState<"all" | "subscription" | "withdrawal">("all");
   const [withdrawDone, setWithdrawDone] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [withdrawError, setWithdrawError] = useState("");
 
   const income = transactions.filter(t => t.type === "subscription" && t.status === "completed").reduce((s, t) => s + t.amount, 0);
   const withdrawn = transactions.filter(t => t.type === "withdrawal" && t.status === "completed").reduce((s, t) => s + t.amount, 0);
   const balance = income - withdrawn;
   const filtered = transactions.filter(t => filter === "all" ? true : t.type === filter);
 
+  const amountNum = Number(amount);
+  const amountExceedsBalance = amountNum > balance;
+  const amountTooLow = amountNum > 0 && amountNum < 1000;
+
   const doWithdraw = async () => {
-    if (!phone || !amount || Number(amount) < 1000 || Number(amount) > balance) return;
+    if (!phone || !amount || amountNum < 1000 || amountExceedsBalance) return;
+    const msisdn = formatWithdrawMsisdn(phone);
     setSaving(true);
+    setWithdrawError("");
     try {
-      await addDoc(collection(db, "transactions"), {
-        type: "withdrawal",
-        amount: Number(amount),
-        description: `Withdrawal to ${phone}`,
-        date: new Date().toISOString().split("T")[0],
-        status: "pending",
-        phone,
-        createdAt: serverTimestamp(),
+      const res = await fetch(`${PAYMENT_API_BASE}/api/withdraw`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          msisdn,
+          amount: amountNum,
+          description: "MovieBox VJ Earnings Withdrawal",
+        }),
       });
-      setWithdrawDone(true);
-      setTimeout(() => { setWithdrawDone(false); setShowWithdraw(false); setPhone(""); setAmount(""); }, 2000);
+      const data = await res.json();
+      console.log("Withdraw response:", data);
+
+      if (data.success) {
+        await addDoc(collection(db, "transactions"), {
+          type: "withdrawal",
+          amount: amountNum,
+          description: `Withdrawal to ${msisdn}`,
+          date: new Date().toISOString().split("T")[0],
+          status: "completed",
+          phone: msisdn,
+          createdAt: serverTimestamp(),
+        });
+        setWithdrawDone(true);
+        setTimeout(() => {
+          setWithdrawDone(false);
+          setShowWithdraw(false);
+          setPhone("");
+          setAmount("");
+          setWithdrawError("");
+        }, 3000);
+      } else {
+        setWithdrawError(data.message || data.error || "Withdrawal failed. Please try again.");
+      }
+    } catch {
+      setWithdrawError("Network error. Please check your connection and try again.");
     } finally {
       setSaving(false);
     }
@@ -699,14 +740,14 @@ function WalletSection({ transactions }: { transactions: Transaction[] }) {
   return (
     <div>
       {showWithdraw && (
-        <Modal title="Withdraw — Mobile Money" onClose={() => setShowWithdraw(false)}>
+        <Modal title="Withdraw — Mobile Money" onClose={() => { if (!saving) { setShowWithdraw(false); setWithdrawError(""); } }}>
           {withdrawDone ? (
             <div className="text-center py-6">
               <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3" style={{ background: "rgba(34,197,94,0.15)" }}>
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round"/></svg>
               </div>
-              <div className="text-white font-bold text-sm">Withdrawal Submitted!</div>
-              <div className="text-white/50 text-xs mt-1">UGX {Number(amount).toLocaleString()} → {phone}</div>
+              <div className="text-white font-bold text-sm">Withdrawal Successful!</div>
+              <div className="text-white/50 text-xs mt-1">UGX {amountNum.toLocaleString()} → {formatWithdrawMsisdn(phone)}</div>
             </div>
           ) : (
             <div className="space-y-3">
@@ -714,13 +755,24 @@ function WalletSection({ transactions }: { transactions: Transaction[] }) {
                 <div className="text-white/50 text-xs mb-0.5">Available Balance</div>
                 <div className="text-green-400 font-bold text-xl">UGX {balance.toLocaleString()}</div>
               </div>
-              <Input label="Mobile Money Phone Number" placeholder="e.g. 0776123456" value={phone} onChange={setPhone} />
-              <Input label="Amount (UGX)" type="number" placeholder="Minimum UGX 1,000" value={amount} onChange={setAmount} />
-              {Number(amount) > balance && <p className="text-red-400 text-xs">Amount exceeds available balance</p>}
-              <GradBtn onClick={doWithdraw}>
+              <Input label="Mobile Money Phone Number" placeholder="e.g. 0776123456" value={phone} onChange={v => { setPhone(v); setWithdrawError(""); }} />
+              <Input label="Amount (UGX)" type="number" placeholder="Minimum UGX 1,000" value={amount} onChange={v => { setAmount(v); setWithdrawError(""); }} />
+              {amountExceedsBalance && amountNum > 0 && <p className="text-red-400 text-xs">Amount exceeds your available balance of UGX {balance.toLocaleString()}</p>}
+              {amountTooLow && <p className="text-yellow-400 text-xs">Minimum withdrawal is UGX 1,000</p>}
+              {withdrawError && (
+                <div className="p-2.5 rounded-lg" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)" }}>
+                  <p className="text-red-400 text-xs text-center">{withdrawError}</p>
+                </div>
+              )}
+              <button
+                onClick={doWithdraw}
+                disabled={saving || amountExceedsBalance || amountTooLow || !phone || !amount}
+                className="flex items-center gap-1.5 font-semibold text-white hover:opacity-90 transition-opacity rounded-lg text-sm px-4 py-2 disabled:opacity-50 w-full justify-center"
+                style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}
+              >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 16l-5-5h3V4h4v7h3l-5 5z"/><path d="M20 18H4v2h16v-2z"/></svg>
-                {saving ? "Submitting..." : `Withdraw UGX ${amount ? Number(amount).toLocaleString() : "—"}`}
-              </GradBtn>
+                {saving ? "Processing…" : `Withdraw UGX ${amountNum > 0 ? amountNum.toLocaleString() : "—"}`}
+              </button>
             </div>
           )}
         </Modal>

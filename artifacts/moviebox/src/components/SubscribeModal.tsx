@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { doc, updateDoc, addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../contexts/AuthContext";
+
+const API_BASE = "https://function-bun-production-ac72.up.railway.app";
 
 const PLANS = [
   { id: "day",   label: "1 Day",   price: 2000,  original: 3000,  discount: 33, days: 1  },
@@ -20,13 +22,24 @@ const BENEFITS = [
 ];
 
 type Step = "plans" | "checkout" | "success";
+type PayStatus = "idle" | "initiating" | "pending" | "failed";
+
+function formatMsisdn(raw: string): string {
+  const cleaned = raw.replace(/\s+/g, "").replace(/[^0-9+]/g, "");
+  if (cleaned.startsWith("+256")) return cleaned;
+  if (cleaned.startsWith("256")) return "+" + cleaned;
+  if (cleaned.startsWith("0")) return "+256" + cleaned.slice(1);
+  return "+256" + cleaned;
+}
 
 async function activateSubscription(
   uid: string,
   planId: string,
   planLabel: string,
   days: number,
-  phone: string
+  phone: string,
+  planPrice: number,
+  msisdn: string
 ) {
   const expiry = new Date();
   expiry.setDate(expiry.getDate() + days);
@@ -45,10 +58,22 @@ async function activateSubscription(
     planLabel,
     days,
     phone,
-    amount: PLANS.find(p => p.id === planId)?.price ?? 0,
+    amount: planPrice,
     activatedAt: serverTimestamp(),
     expiresAt: expiryStr,
     status: "active",
+  });
+
+  const vjEarnings = Math.floor(planPrice * 0.6);
+  await addDoc(collection(db, "transactions"), {
+    type: "subscription",
+    amount: vjEarnings,
+    description: `Subscription: ${planLabel} (${msisdn})`,
+    date: new Date().toISOString().split("T")[0],
+    status: "completed",
+    phone: msisdn,
+    uid,
+    createdAt: serverTimestamp(),
   });
 }
 
@@ -59,6 +84,23 @@ export function SubscribeModal({ onClose, isMobile }: { onClose: () => void; isM
   const [phone, setPhone] = useState(profile?.phone || "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [payStatus, setPayStatus] = useState<PayStatus>("idle");
+
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const payStatusRef = useRef<PayStatus>("idle");
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const updatePayStatus = (s: PayStatus) => {
+    payStatusRef.current = s;
+    setPayStatus(s);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   const plan = PLANS[selectedPlan];
   const saved = plan.original - plan.price;
@@ -68,17 +110,105 @@ export function SubscribeModal({ onClose, isMobile }: { onClose: () => void; isM
     if (!profile) { setError("Please log in first to subscribe."); return; }
     const cleaned = phone.replace(/\s+/g, "");
     if (!cleaned || cleaned.length < 9) { setError("Enter a valid phone number."); return; }
+
+    const msisdn = formatMsisdn(cleaned);
     setError("");
     setLoading(true);
+    updatePayStatus("initiating");
+
     try {
-      await activateSubscription(profile.uid, plan.id, plan.label, plan.days, cleaned);
-      await refreshProfile();
-      setStep("success");
-    } catch (e) {
-      setError("Failed to activate. Please try again.");
-    } finally {
+      const depositRes = await fetch(`${API_BASE}/api/deposit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          msisdn,
+          amount: plan.price,
+          description: `MovieBox ${plan.label} Subscription`,
+        }),
+      });
+      const depositData = await depositRes.json();
+      console.log("Deposit response:", depositData);
+
+      const internalRef = depositData.internal_reference ?? depositData.data?.internal_reference;
+
+      if (!depositData.success || !internalRef) {
+        setError(depositData.message || depositData.error || "Failed to initiate payment. Please try again.");
+        updatePayStatus("failed");
+        setLoading(false);
+        return;
+      }
+
+      updatePayStatus("pending");
+
+      const poll = async () => {
+        try {
+          const statusRes = await fetch(`${API_BASE}/api/request-status?internal_reference=${encodeURIComponent(internalRef)}`);
+          const statusData = await statusRes.json();
+          console.log("Payment status:", statusData);
+
+          const d = statusData.data ?? statusData;
+
+          if (d.request_status === "success" || (d.success === true && d.status === "success")) {
+            if (pollingRef.current) clearInterval(pollingRef.current);
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            try {
+              await activateSubscription(profile.uid, plan.id, plan.label, plan.days, cleaned, plan.price, msisdn);
+              await refreshProfile();
+              updatePayStatus("idle");
+              setStep("success");
+            } catch {
+              setError("Payment received but activation failed. Contact support.");
+              updatePayStatus("failed");
+            }
+            setLoading(false);
+          } else if (
+            d.request_status === "failed" ||
+            d.status === "failed" ||
+            d.request_status === "cancelled" ||
+            d.status === "cancelled"
+          ) {
+            if (pollingRef.current) clearInterval(pollingRef.current);
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            setError(d.message || "Payment was declined or failed. Please try again.");
+            updatePayStatus("failed");
+            setLoading(false);
+          }
+        } catch {
+          // network hiccup, keep polling
+        }
+      };
+
+      poll();
+      pollingRef.current = setInterval(poll, 1000);
+
+      timeoutRef.current = setTimeout(() => {
+        if (pollingRef.current) clearInterval(pollingRef.current);
+        if (payStatusRef.current === "pending") {
+          setError("Payment confirmation timed out. Check your phone and try again.");
+          updatePayStatus("failed");
+          setLoading(false);
+        }
+      }, 5 * 60 * 1000);
+
+    } catch {
+      setError("Network error. Please check your connection and try again.");
+      updatePayStatus("failed");
       setLoading(false);
     }
+  };
+
+  const resetPayment = () => {
+    if (pollingRef.current) clearInterval(pollingRef.current);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    updatePayStatus("idle");
+    setError("");
+    setLoading(false);
+  };
+
+  const buttonLabel = () => {
+    if (payStatus === "initiating") return "Initiating payment…";
+    if (payStatus === "pending") return "Waiting for confirmation…";
+    return `Pay ${fmt(plan.price)} & Subscribe`;
   };
 
   if (isMobile) {
@@ -93,8 +223,8 @@ export function SubscribeModal({ onClose, isMobile }: { onClose: () => void; isM
           {/* Header */}
           <div className="flex items-center justify-between px-4 pt-2.5 pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
             <div className="flex items-center gap-2">
-              {step !== "plans" && step !== "success" && (
-                <button onClick={() => { setStep("plans"); setError(""); }} className="text-white/40 hover:text-white mr-1">
+              {step !== "plans" && step !== "success" && payStatus !== "pending" && (
+                <button onClick={() => { resetPayment(); setStep("plans"); }} className="text-white/40 hover:text-white mr-1">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M15 18l-6-6 6-6"/></svg>
                 </button>
               )}
@@ -168,47 +298,72 @@ export function SubscribeModal({ onClose, isMobile }: { onClose: () => void; isM
               </>
             )}
 
-            {/* Checkout – phone number */}
+            {/* Checkout */}
             {step === "checkout" && (
               <>
-                <div className="mb-3 p-3 rounded-xl flex items-center justify-between" style={{ background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.25)" }}>
-                  <div>
-                    <div className="text-white/50 text-[10px]">Selected plan</div>
-                    <div className="text-white font-bold text-sm">{plan.label} · {fmt(plan.price)}</div>
+                {payStatus === "pending" ? (
+                  <div className="text-center py-4">
+                    <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3" style={{ background: "rgba(168,85,247,0.15)", border: "2px solid rgba(168,85,247,0.5)" }}>
+                      <svg className="animate-spin" width="26" height="26" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="rgba(168,85,247,0.3)" strokeWidth="3"/>
+                        <path d="M12 2a10 10 0 0 1 10 10" stroke="#a855f7" strokeWidth="3" strokeLinecap="round"/>
+                      </svg>
+                    </div>
+                    <p className="text-white font-bold text-sm mb-1">Check your phone</p>
+                    <p className="text-white/50 text-xs mb-1">A payment prompt of <span className="text-purple-400 font-semibold">{fmt(plan.price)}</span> has been sent to your mobile money number.</p>
+                    <p className="text-white/30 text-[10px] mb-4">Approve it to activate your subscription. This page will update automatically.</p>
+                    <div className="flex items-center justify-center gap-1.5 text-white/40 text-[10px]">
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                      Waiting for payment confirmation…
+                    </div>
                   </div>
-                  <button onClick={() => setStep("plans")} className="text-purple-400 text-[10px] underline">Change</button>
-                </div>
+                ) : (
+                  <>
+                    <div className="mb-3 p-3 rounded-xl flex items-center justify-between" style={{ background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.25)" }}>
+                      <div>
+                        <div className="text-white/50 text-[10px]">Selected plan</div>
+                        <div className="text-white font-bold text-sm">{plan.label} · {fmt(plan.price)}</div>
+                      </div>
+                      <button onClick={() => { resetPayment(); setStep("plans"); }} className="text-purple-400 text-[10px] underline">Change</button>
+                    </div>
 
-                <div className="rounded-xl overflow-hidden border mb-3" style={{ borderColor: "rgba(168,85,247,0.35)" }}>
-                  <img src="https://pbs.twimg.com/media/Ggq-h4CXEAAv6wk.jpg" alt="Mobile Money" className="w-full object-cover" style={{ maxHeight: 70 }} />
-                </div>
+                    <div className="rounded-xl overflow-hidden border mb-3" style={{ borderColor: "rgba(168,85,247,0.35)" }}>
+                      <img src="https://pbs.twimg.com/media/Ggq-h4CXEAAv6wk.jpg" alt="Mobile Money" className="w-full object-cover" style={{ maxHeight: 70 }} />
+                    </div>
 
-                <label className="block text-white/50 text-[10px] mb-1 font-medium">Mobile Money Number</label>
-                <div className="flex items-center gap-2 h-10 px-3 rounded-xl mb-1" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)" }}>
-                  <span className="text-white/40 text-xs font-medium flex-shrink-0">🇺🇬 +256</span>
-                  <div className="w-px h-4 bg-white/15 flex-shrink-0" />
-                  <input
-                    type="tel"
-                    placeholder="7XX XXX XXX"
-                    value={phone}
-                    onChange={e => { setPhone(e.target.value); setError(""); }}
-                    className="flex-1 bg-transparent outline-none text-white text-sm placeholder:text-white/25"
-                    autoFocus
-                  />
-                </div>
-                <p className="text-white/30 text-[9px] mb-3">Enter the number to charge via Mobile Money</p>
+                    <label className="block text-white/50 text-[10px] mb-1 font-medium">Mobile Money Number</label>
+                    <div className="flex items-center gap-2 h-10 px-3 rounded-xl mb-1" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)" }}>
+                      <span className="text-white/40 text-xs font-medium flex-shrink-0">🇺🇬 +256</span>
+                      <div className="w-px h-4 bg-white/15 flex-shrink-0" />
+                      <input
+                        type="tel"
+                        placeholder="7XX XXX XXX"
+                        value={phone}
+                        onChange={e => { setPhone(e.target.value); setError(""); }}
+                        className="flex-1 bg-transparent outline-none text-white text-sm placeholder:text-white/25"
+                        autoFocus
+                        disabled={loading}
+                      />
+                    </div>
+                    <p className="text-white/30 text-[9px] mb-3">Enter the number to charge via Mobile Money</p>
 
-                {error && <p className="text-red-400 text-[10px] mb-2 text-center">{error}</p>}
+                    {error && (
+                      <div className="mb-2 px-3 py-2 rounded-lg text-center" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)" }}>
+                        <p className="text-red-400 text-[10px]">{error}</p>
+                      </div>
+                    )}
 
-                <button
-                  onClick={handleSubscribe}
-                  disabled={loading}
-                  className="w-full h-10 rounded-xl font-bold text-sm text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-                  style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}
-                >
-                  {loading ? "Activating…" : `Pay ${fmt(plan.price)} & Subscribe`}
-                </button>
-                <p className="text-white/25 text-[9px] text-center mt-1.5">Access activates immediately after payment</p>
+                    <button
+                      onClick={handleSubscribe}
+                      disabled={loading}
+                      className="w-full h-10 rounded-xl font-bold text-sm text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                      style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}
+                    >
+                      {loading ? buttonLabel() : `Pay ${fmt(plan.price)} & Subscribe`}
+                    </button>
+                    <p className="text-white/25 text-[9px] text-center mt-1.5">You'll get a prompt on your phone to approve the payment</p>
+                  </>
+                )}
               </>
             )}
 
@@ -294,45 +449,71 @@ export function SubscribeModal({ onClose, isMobile }: { onClose: () => void; isM
         {/* Right column – checkout */}
         {step !== "success" && (
           <div className="w-64 flex-shrink-0 flex flex-col p-5" style={{ background: "#0e1015", borderLeft: "1px solid rgba(255,255,255,0.06)" }}>
-            <div className="text-center mb-4">
-              <div className="text-white/50 text-xs mb-1">You pay</div>
-              <div className="text-white font-bold text-2xl mb-2">{fmt(plan.price)}</div>
-              <div className="inline-block text-white text-xs font-semibold px-3 py-1 rounded-full" style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}>Save {fmt(saved)}</div>
-            </div>
-            <div className="border-t mb-4" style={{ borderColor: "rgba(255,255,255,0.08)" }} />
-            <div>
-              <div className="text-white text-xs font-semibold mb-2">Payment Method</div>
-              <div className="rounded-xl overflow-hidden border mb-3" style={{ borderColor: "rgba(168,85,247,0.4)" }}>
-                <img src="https://pbs.twimg.com/media/Ggq-h4CXEAAv6wk.jpg" alt="Mobile Money" className="w-full object-cover" style={{ maxHeight: 80 }} />
+            {payStatus === "pending" ? (
+              <div className="flex flex-col items-center justify-center flex-1 text-center py-4">
+                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: "rgba(168,85,247,0.1)", border: "2px solid rgba(168,85,247,0.4)" }}>
+                  <svg className="animate-spin" width="30" height="30" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="rgba(168,85,247,0.25)" strokeWidth="3"/>
+                    <path d="M12 2a10 10 0 0 1 10 10" stroke="#a855f7" strokeWidth="3" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <p className="text-white font-bold text-sm mb-2">Check your phone</p>
+                <p className="text-white/50 text-xs mb-1">A payment prompt of <span className="text-purple-400 font-semibold">{fmt(plan.price)}</span> was sent to your mobile money number.</p>
+                <p className="text-white/30 text-[11px] mt-2">Approve it to activate your subscription. This will update automatically.</p>
+                <div className="flex items-center gap-1.5 mt-4 text-white/40 text-[10px]">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                  Waiting for confirmation…
+                </div>
               </div>
-              <div className="text-white text-xs font-semibold mb-1.5">Mobile Money Number</div>
-              <div className="flex items-center gap-1.5 h-9 px-2.5 rounded-lg mb-1" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)" }}>
-                <span className="text-white/40 text-[10px] font-medium flex-shrink-0">🇺🇬 +256</span>
-                <div className="w-px h-3.5 bg-white/15 flex-shrink-0" />
-                <input
-                  type="tel"
-                  placeholder="7XX XXX XXX"
-                  value={phone}
-                  onChange={e => { setPhone(e.target.value); setError(""); }}
-                  className="flex-1 bg-transparent outline-none text-white text-xs placeholder:text-white/25"
-                />
-              </div>
-              <p className="text-white/30 text-[9px] mb-3">Number to charge via Mobile Money</p>
-              {error && <p className="text-red-400 text-[10px] mb-2 text-center">{error}</p>}
-            </div>
-            <div className="flex-1" />
-            <button
-              onClick={handleSubscribe}
-              disabled={loading}
-              className="w-full h-11 rounded-xl font-bold text-sm text-white mt-4 hover:opacity-90 transition-opacity disabled:opacity-50"
-              style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}
-            >
-              {loading ? "Activating…" : `Pay now · ${fmt(plan.price)}`}
-            </button>
-            <div className="flex justify-center gap-2 mt-3">
-              <a href="#" className="text-white/30 text-[10px] hover:text-white/60 transition-colors">VIP Terms</a>
-              <a href="#" className="text-white/30 text-[10px] hover:text-white/60 transition-colors">Privacy Policy</a>
-            </div>
+            ) : (
+              <>
+                <div className="text-center mb-4">
+                  <div className="text-white/50 text-xs mb-1">You pay</div>
+                  <div className="text-white font-bold text-2xl mb-2">{fmt(plan.price)}</div>
+                  <div className="inline-block text-white text-xs font-semibold px-3 py-1 rounded-full" style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}>Save {fmt(saved)}</div>
+                </div>
+                <div className="border-t mb-4" style={{ borderColor: "rgba(255,255,255,0.08)" }} />
+                <div>
+                  <div className="text-white text-xs font-semibold mb-2">Payment Method</div>
+                  <div className="rounded-xl overflow-hidden border mb-3" style={{ borderColor: "rgba(168,85,247,0.4)" }}>
+                    <img src="https://pbs.twimg.com/media/Ggq-h4CXEAAv6wk.jpg" alt="Mobile Money" className="w-full object-cover" style={{ maxHeight: 80 }} />
+                  </div>
+                  <div className="text-white text-xs font-semibold mb-1.5">Mobile Money Number</div>
+                  <div className="flex items-center gap-1.5 h-9 px-2.5 rounded-lg mb-1" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)" }}>
+                    <span className="text-white/40 text-[10px] font-medium flex-shrink-0">🇺🇬 +256</span>
+                    <div className="w-px h-3.5 bg-white/15 flex-shrink-0" />
+                    <input
+                      type="tel"
+                      placeholder="7XX XXX XXX"
+                      value={phone}
+                      onChange={e => { setPhone(e.target.value); setError(""); }}
+                      className="flex-1 bg-transparent outline-none text-white text-xs placeholder:text-white/25"
+                      disabled={loading}
+                    />
+                  </div>
+                  <p className="text-white/30 text-[9px] mb-3">Number to charge via Mobile Money</p>
+                  {error && (
+                    <div className="mb-2 px-2 py-1.5 rounded-lg" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)" }}>
+                      <p className="text-red-400 text-[10px] text-center">{error}</p>
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1" />
+                <button
+                  onClick={handleSubscribe}
+                  disabled={loading}
+                  className="w-full h-11 rounded-xl font-bold text-sm text-white mt-4 hover:opacity-90 transition-opacity disabled:opacity-50"
+                  style={{ background: "linear-gradient(90deg,#a855f7,#ec4899)" }}
+                >
+                  {loading ? buttonLabel() : `Pay now · ${fmt(plan.price)}`}
+                </button>
+                <p className="text-white/25 text-[9px] text-center mt-1.5">You'll get a prompt on your phone to confirm</p>
+                <div className="flex justify-center gap-2 mt-2">
+                  <a href="#" className="text-white/30 text-[10px] hover:text-white/60 transition-colors">VIP Terms</a>
+                  <a href="#" className="text-white/30 text-[10px] hover:text-white/60 transition-colors">Privacy Policy</a>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
