@@ -9,6 +9,7 @@ import { SeriesPage } from "./pages/SeriesPage";
 import { PlayPage } from "./pages/PlayPage";
 import { VJDashboard } from "./pages/VJDashboard";
 import { AdminDashboard } from "./pages/AdminDashboard";
+import { ProfilePage } from "./pages/ProfilePage";
 import type { ContentItem } from "./lib/types";
 import { useAuth } from "./contexts/AuthContext";
 
@@ -47,6 +48,27 @@ function App() {
 
   if (activeNav === "play" && selectedMovie) {
     return <PlayPage movie={selectedMovie} onBack={handleBack} />;
+  }
+
+  if (activeNav === "profile") {
+    return (
+      <div className="min-h-screen bg-[#101114] text-white">
+        <Sidebar
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          activeNav={activeNav}
+          onNavChange={setActiveNav}
+          isAdmin={isAdmin}
+        />
+        <div className="md:ml-[200px] min-h-screen">
+          <Header onMenuToggle={() => setSidebarOpen(true)} />
+          <main className="pt-11 md:pt-10">
+            <ProfilePage />
+          </main>
+        </div>
+        <MobileNav activeNav={activeNav} onNavChange={setActiveNav} />
+      </div>
+    );
   }
 
   const renderContent = () => {

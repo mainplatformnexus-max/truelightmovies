@@ -50,20 +50,6 @@ const navItems = [
     ),
   },
   {
-    id: "downloads",
-    label: "Downloads",
-    normalIcon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
-      </svg>
-    ),
-    activeIcon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
-      </svg>
-    ),
-  },
-  {
     id: "profile",
     label: "Profile",
     normalIcon: (
@@ -95,11 +81,7 @@ export function MobileNav({ activeNav, onNavChange }: MobileNavProps) {
                 <span className={isActive ? "text-[#a855f7]" : "text-white/50"}>
                   {isActive ? item.activeIcon : item.normalIcon}
                 </span>
-                <span
-                  className={`text-[10px] font-medium ${
-                    isActive ? "text-white font-semibold" : "text-white/50"
-                  }`}
-                >
+                <span className={`text-[10px] font-medium ${isActive ? "text-white font-semibold" : "text-white/50"}`}>
                   {item.label}
                 </span>
               </button>
