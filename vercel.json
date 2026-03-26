@@ -1,7 +1,6 @@
 {
-  "installCommand": "pnpm install",
+  "installCommand": "pnpm install --no-frozen-lockfile",
   "buildCommand": "pnpm --filter @workspace/moviebox run build",
-  "outputDirectory": "artifacts/moviebox/dist",
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
-  "framework": null
+  "outputDirectory": "dist",
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
