@@ -1,0 +1,7 @@
+{
+  "installCommand": "pnpm install",
+  "buildCommand": "pnpm --filter @workspace/moviebox run build",
+  "outputDirectory": "artifacts/moviebox/dist",
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
+  "framework": null
+}
