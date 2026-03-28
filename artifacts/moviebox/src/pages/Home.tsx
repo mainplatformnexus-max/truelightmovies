@@ -29,17 +29,16 @@ function GenreGrid() {
   };
 
   return (
-    <div className="px-3 md:px-0 mb-5">
-      <div className="flex flex-wrap gap-2">
+    <div className="mb-4 overflow-x-auto scrollbar-hide px-3 md:px-0">
+      <div className="flex gap-1.5 w-max">
         {GENRE_TILES.map((g) => (
           <button
             key={g.id}
             onClick={() => handleClick(g.id)}
-            className="flex items-center gap-1.5 px-3 py-1 rounded-full text-white text-xs font-medium transition-transform active:scale-95 hover:opacity-90"
+            className="px-2.5 py-0.5 md:px-3 md:py-1 rounded-full text-white text-[10px] md:text-xs font-medium whitespace-nowrap transition-transform active:scale-95 hover:opacity-90"
             style={{ background: g.bg }}
           >
-            <span className="text-sm leading-none">{g.emoji}</span>
-            <span>{g.label}</span>
+            {g.label}
           </button>
         ))}
       </div>
