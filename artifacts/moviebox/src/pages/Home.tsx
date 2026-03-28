@@ -11,6 +11,43 @@ interface HomePageProps {
   onPlay?: (movie: ContentItem) => void;
 }
 
+const GENRE_TILES = [
+  { id: "action",     label: "Action",     emoji: "🔥", bg: "linear-gradient(135deg,#c0392b,#e74c3c)" },
+  { id: "drama",      label: "Drama",      emoji: "🎭", bg: "linear-gradient(135deg,#2980b9,#3498db)" },
+  { id: "comedy",     label: "Comedy",     emoji: "😂", bg: "linear-gradient(135deg,#f39c12,#f1c40f)" },
+  { id: "war",        label: "War",        emoji: "⚔️", bg: "linear-gradient(135deg,#5d6d7e,#7f8c8d)" },
+  { id: "highschool", label: "Highschool", emoji: "🏫", bg: "linear-gradient(135deg,#27ae60,#2ecc71)" },
+  { id: "indian",     label: "Indian",     emoji: "🪔", bg: "linear-gradient(135deg,#d35400,#e67e22)" },
+  { id: "thriller",   label: "Thriller",   emoji: "🔪", bg: "linear-gradient(135deg,#6c3483,#a855f7)" },
+  { id: "sci-fi",     label: "Sci-Fi",     emoji: "🚀", bg: "linear-gradient(135deg,#0e6655,#1abc9c)" },
+];
+
+function GenreGrid() {
+  const handleClick = (id: string) => {
+    const el = document.getElementById(`genre-${id}`);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  return (
+    <div className="px-3 md:px-0 mb-6">
+      <h2 className="text-white text-sm font-semibold mb-3 opacity-80">Browse by Genre</h2>
+      <div className="grid grid-cols-4 gap-2 md:grid-cols-8">
+        {GENRE_TILES.map((g) => (
+          <button
+            key={g.id}
+            onClick={() => handleClick(g.id)}
+            className="flex flex-col items-center justify-center gap-1 rounded-xl py-3 px-1 transition-transform active:scale-95 hover:scale-105"
+            style={{ background: g.bg }}
+          >
+            <span className="text-xl leading-none">{g.emoji}</span>
+            <span className="text-white text-[10px] font-semibold leading-tight">{g.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function HomePage({ onPlay }: HomePageProps) {
   const { movies, series, all, popular, loading } = useContent();
   const { items: carouselItems, loading: carouselLoading } = useCarousel();
@@ -32,12 +69,16 @@ export function HomePage({ onPlay }: HomePageProps) {
   const byCategory = (items: ContentItem[], category: string) =>
     items.filter(i => i.category?.toLowerCase() === category.toLowerCase());
 
-  const actionMovies = byCategory(all, "action");
-  const horrorMovies = byCategory(all, "horror");
+  const actionMovies    = byCategory(all, "action");
+  const horrorMovies    = byCategory(all, "horror");
   const adventureMovies = byCategory(all, "adventure");
-  const dramaMovies = byCategory(all, "drama");
-  const comedyMovies = byCategory(all, "comedy");
-  const thrillerMovies = byCategory(all, "thriller");
+  const dramaMovies     = byCategory(all, "drama");
+  const comedyMovies    = byCategory(all, "comedy");
+  const thrillerMovies  = byCategory(all, "thriller");
+  const warMovies       = byCategory(all, "war");
+  const highschoolMovies = byCategory(all, "highschool");
+  const indianMovies    = byCategory(all, "indian");
+  const scifiMovies     = byCategory(all, "sci-fi");
 
   const showAdminCarousel = !carouselLoading && carouselItems.length > 0;
   const carouselItem = carouselItems[current] ?? null;
@@ -98,6 +139,8 @@ export function HomePage({ onPlay }: HomePageProps) {
         </div>
       )}
 
+      <GenreGrid />
+
       <div className="px-3 md:px-0">
         {series.length > 0 && (
           <MovieRow title="TV Series" movies={series} onPlay={onPlay} />
@@ -108,24 +151,56 @@ export function HomePage({ onPlay }: HomePageProps) {
         {popular.length > 0 && (
           <MovieRow title="Popular" movies={popular} onPlay={onPlay} />
         )}
-        {actionMovies.length > 0 && (
-          <MovieRow title="Action" movies={actionMovies} onPlay={onPlay} />
-        )}
-        {horrorMovies.length > 0 && (
-          <MovieRow title="Horror" movies={horrorMovies} onPlay={onPlay} />
-        )}
-        {adventureMovies.length > 0 && (
-          <MovieRow title="Adventure" movies={adventureMovies} onPlay={onPlay} />
-        )}
-        {dramaMovies.length > 0 && (
-          <MovieRow title="Drama" movies={dramaMovies} onPlay={onPlay} />
-        )}
-        {comedyMovies.length > 0 && (
-          <MovieRow title="Comedy" movies={comedyMovies} onPlay={onPlay} />
-        )}
-        {thrillerMovies.length > 0 && (
-          <MovieRow title="Thriller" movies={thrillerMovies} onPlay={onPlay} />
-        )}
+        <div id="genre-action">
+          {actionMovies.length > 0 && (
+            <MovieRow title="Action" movies={actionMovies} onPlay={onPlay} />
+          )}
+        </div>
+        <div id="genre-horror">
+          {horrorMovies.length > 0 && (
+            <MovieRow title="Horror" movies={horrorMovies} onPlay={onPlay} />
+          )}
+        </div>
+        <div id="genre-adventure">
+          {adventureMovies.length > 0 && (
+            <MovieRow title="Adventure" movies={adventureMovies} onPlay={onPlay} />
+          )}
+        </div>
+        <div id="genre-drama">
+          {dramaMovies.length > 0 && (
+            <MovieRow title="Drama" movies={dramaMovies} onPlay={onPlay} />
+          )}
+        </div>
+        <div id="genre-comedy">
+          {comedyMovies.length > 0 && (
+            <MovieRow title="Comedy" movies={comedyMovies} onPlay={onPlay} />
+          )}
+        </div>
+        <div id="genre-thriller">
+          {thrillerMovies.length > 0 && (
+            <MovieRow title="Thriller" movies={thrillerMovies} onPlay={onPlay} />
+          )}
+        </div>
+        <div id="genre-war">
+          {warMovies.length > 0 && (
+            <MovieRow title="War" movies={warMovies} onPlay={onPlay} />
+          )}
+        </div>
+        <div id="genre-highschool">
+          {highschoolMovies.length > 0 && (
+            <MovieRow title="Highschool" movies={highschoolMovies} onPlay={onPlay} />
+          )}
+        </div>
+        <div id="genre-indian">
+          {indianMovies.length > 0 && (
+            <MovieRow title="Indian" movies={indianMovies} onPlay={onPlay} />
+          )}
+        </div>
+        <div id="genre-sci-fi">
+          {scifiMovies.length > 0 && (
+            <MovieRow title="Sci-Fi" movies={scifiMovies} onPlay={onPlay} />
+          )}
+        </div>
         {all.length === 0 && (
           <div className="text-center py-20">
             <div className="text-white/20 text-5xl mb-3">🎬</div>

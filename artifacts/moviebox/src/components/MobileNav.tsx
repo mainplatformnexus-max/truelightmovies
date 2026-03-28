@@ -2,6 +2,7 @@ interface MobileNavProps {
   activeNav: string;
   onNavChange: (id: string) => void;
   isAdmin?: boolean;
+  isVJ?: boolean;
 }
 
 const navItems = [
@@ -99,6 +100,7 @@ const navItems = [
 const adminNavItem = {
   id: "admin-dashboard",
   label: "Admin",
+  color: "text-amber-400",
   normalIcon: (
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z"/>
@@ -112,24 +114,51 @@ const adminNavItem = {
   ),
 };
 
-export function MobileNav({ activeNav, onNavChange, isAdmin }: MobileNavProps) {
-  const items = isAdmin ? [...navItems, adminNavItem] : navItems;
+const vjNavItem = {
+  id: "vj-dashboard",
+  label: "VJ",
+  color: "text-cyan-400",
+  normalIcon: (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
+      <path d="M15.54 8.46a5 5 0 0 1 0 7.07M8.46 8.46a5 5 0 0 0 0 7.07"/>
+    </svg>
+  ),
+  activeIcon: (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm0-7C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
+    </svg>
+  ),
+};
+
+export function MobileNav({ activeNav, onNavChange, isAdmin, isVJ }: MobileNavProps) {
+  const extras = [];
+  if (isVJ) extras.push(vjNavItem);
+  if (isAdmin) extras.push(adminNavItem);
+  const items = [...navItems, ...extras];
+
+  const getColor = (item: typeof navItems[0] & { color?: string }, isActive: boolean) => {
+    if (isActive) return "text-[#a855f7]";
+    return (item as { color?: string }).color ?? "text-white/50";
+  };
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-[#1c1d23] border-t border-white/10 z-50 md:hidden pb-safe">
       <ul className="flex items-center justify-around py-0.5">
         {items.map((item) => {
           const isActive = activeNav === item.id;
+          const colorClass = getColor(item as typeof navItems[0] & { color?: string }, isActive);
           return (
             <li key={item.id} className="flex-1">
               <button
                 onClick={() => onNavChange(item.id)}
                 className="flex flex-col items-center gap-0.5 w-full py-1.5"
               >
-                <span className={isActive ? "text-[#a855f7]" : item.id === "admin-dashboard" ? "text-amber-400" : "text-white/50"}>
+                <span className={colorClass}>
                   {isActive ? item.activeIcon : item.normalIcon}
                 </span>
-                <span className={`text-[9px] font-medium ${isActive ? "text-white font-semibold" : item.id === "admin-dashboard" ? "text-amber-400" : "text-white/50"}`}>
+                <span className={`text-[9px] font-medium ${isActive ? "text-white font-semibold" : colorClass}`}>
                   {item.label}
                 </span>
               </button>

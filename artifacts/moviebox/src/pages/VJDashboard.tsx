@@ -70,7 +70,7 @@ interface Transaction {
   phone?: string;
 }
 
-const CATEGORIES = ["Action", "Comedy", "Drama", "Horror", "Romance", "Sci-Fi", "Thriller", "Animation", "Documentary", "Christian"];
+const CATEGORIES = ["Action", "Comedy", "Drama", "Horror", "Romance", "Sci-Fi", "Thriller", "Animation", "Documentary", "Christian", "War", "Highschool", "Indian"];
 
 function EditMovieModal({ movie, onClose }: { movie: Movie; onClose: () => void }) {
   const [form, setForm] = useState({ ...movie });

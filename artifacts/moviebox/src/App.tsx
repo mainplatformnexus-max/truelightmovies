@@ -110,7 +110,7 @@ function App() {
           {renderContent()}
         </main>
       </div>
-      <MobileNav activeNav={activeNav} onNavChange={setActiveNav} isAdmin={isAdmin} />
+      <MobileNav activeNav={activeNav} onNavChange={setActiveNav} isAdmin={isAdmin} isVJ={isVJ} />
       <div className="md:hidden fixed bottom-[56px] left-0 right-0 z-40">
         <DownloadBar />
       </div>
