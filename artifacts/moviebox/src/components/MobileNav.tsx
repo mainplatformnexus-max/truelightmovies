@@ -1,6 +1,7 @@
 interface MobileNavProps {
   activeNav: string;
   onNavChange: (id: string) => void;
+  isAdmin?: boolean;
 }
 
 const navItems = [
@@ -95,11 +96,29 @@ const navItems = [
   },
 ];
 
-export function MobileNav({ activeNav, onNavChange }: MobileNavProps) {
+const adminNavItem = {
+  id: "admin-dashboard",
+  label: "Admin",
+  normalIcon: (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2z"/>
+      <path d="M9 12l2 2 4-4"/>
+    </svg>
+  ),
+  activeIcon: (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.25C17.25 22.15 21 17.25 21 12V7L12 2zm-1 11.59l-2.29-2.3-1.42 1.42L11 16.42l6.71-6.71-1.42-1.42L11 13.59z"/>
+    </svg>
+  ),
+};
+
+export function MobileNav({ activeNav, onNavChange, isAdmin }: MobileNavProps) {
+  const items = isAdmin ? [...navItems, adminNavItem] : navItems;
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-[#1c1d23] border-t border-white/10 z-50 md:hidden pb-safe">
       <ul className="flex items-center justify-around py-0.5">
-        {navItems.map((item) => {
+        {items.map((item) => {
           const isActive = activeNav === item.id;
           return (
             <li key={item.id} className="flex-1">
@@ -107,10 +126,10 @@ export function MobileNav({ activeNav, onNavChange }: MobileNavProps) {
                 onClick={() => onNavChange(item.id)}
                 className="flex flex-col items-center gap-0.5 w-full py-1.5"
               >
-                <span className={isActive ? "text-[#a855f7]" : "text-white/50"}>
+                <span className={isActive ? "text-[#a855f7]" : item.id === "admin-dashboard" ? "text-amber-400" : "text-white/50"}>
                   {isActive ? item.activeIcon : item.normalIcon}
                 </span>
-                <span className={`text-[9px] font-medium ${isActive ? "text-white font-semibold" : "text-white/50"}`}>
+                <span className={`text-[9px] font-medium ${isActive ? "text-white font-semibold" : item.id === "admin-dashboard" ? "text-amber-400" : "text-white/50"}`}>
                   {item.label}
                 </span>
               </button>
