@@ -5,6 +5,7 @@ import type { ContentItem } from "../lib/types";
 const CATEGORIES = [
   "All", "Action", "Comedy", "Drama", "Horror", "Romance",
   "Sci-Fi", "Thriller", "Animation", "Documentary", "Christian",
+  "War", "Highschool", "Indian",
 ];
 
 function ContentCard({ item, onPlay }: { item: ContentItem; onPlay?: (m: ContentItem) => void }) {
@@ -50,7 +51,7 @@ export function CategoriesPage({ onPlay }: { onPlay?: (m: ContentItem) => void }
 
   const filtered = all
     .filter(m => selected === "All" || m.category?.toLowerCase() === selected.toLowerCase())
-    .filter(m => !search || m.title.toLowerCase().includes(search.toLowerCase()));
+    .filter(m => !search || m.title?.toLowerCase().includes(search.toLowerCase()));
 
   const counts: Record<string, number> = { All: all.length };
   CATEGORIES.slice(1).forEach(cat => {

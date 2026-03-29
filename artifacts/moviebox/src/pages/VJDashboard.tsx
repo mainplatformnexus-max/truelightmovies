@@ -332,7 +332,7 @@ function MoviesSection({ movies, setMovies, vjName }: { movies: Movie[]; setMovi
   const [search, setSearch] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const filtered = movies.filter(m => m.title.toLowerCase().includes(search.toLowerCase()));
+  const filtered = movies.filter(m => m.title?.toLowerCase().includes(search.toLowerCase()));
 
   const save = async () => {
     if (!form.title || !form.category) return;
@@ -431,7 +431,7 @@ function SeriesSection({ series, setSeries, vjName }: { series: Series[]; setSer
   const [search, setSearch] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const filtered = series.filter(s => s.title.toLowerCase().includes(search.toLowerCase()));
+  const filtered = series.filter(s => s.title?.toLowerCase().includes(search.toLowerCase()));
 
   const save = async () => {
     if (!form.title || !form.category) return;
@@ -615,7 +615,7 @@ function UsersSection({ users }: { users: User[] }) {
 
   const filtered = users
     .filter(u => tab === "all" ? true : tab === "active" ? u.status === "active" : u.status === "none")
-    .filter(u => u.displayName.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase()));
+    .filter(u => u.displayName?.toLowerCase().includes(search.toLowerCase()) || u.email?.toLowerCase().includes(search.toLowerCase()));
 
   const statusBadge = (u: User) => {
     if (u.status === "active") return <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 font-medium">Active</span>;

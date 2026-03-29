@@ -12,14 +12,15 @@ interface HomePageProps {
 }
 
 const GENRE_TILES = [
-  { id: "action",     label: "Action",     emoji: "🔥", bg: "linear-gradient(135deg,#c0392b,#e74c3c)" },
-  { id: "drama",      label: "Drama",      emoji: "🎭", bg: "linear-gradient(135deg,#2980b9,#3498db)" },
-  { id: "comedy",     label: "Comedy",     emoji: "😂", bg: "linear-gradient(135deg,#f39c12,#f1c40f)" },
-  { id: "war",        label: "War",        emoji: "⚔️", bg: "linear-gradient(135deg,#5d6d7e,#7f8c8d)" },
-  { id: "highschool", label: "Highschool", emoji: "🏫", bg: "linear-gradient(135deg,#27ae60,#2ecc71)" },
-  { id: "indian",     label: "Indian",     emoji: "🪔", bg: "linear-gradient(135deg,#d35400,#e67e22)" },
-  { id: "thriller",   label: "Thriller",   emoji: "🔪", bg: "linear-gradient(135deg,#6c3483,#a855f7)" },
-  { id: "sci-fi",     label: "Sci-Fi",     emoji: "🚀", bg: "linear-gradient(135deg,#0e6655,#1abc9c)" },
+  { id: "action",     label: "Action",    bg: "linear-gradient(135deg,#c0392b,#e74c3c)" },
+  { id: "drama",      label: "Drama",     bg: "linear-gradient(135deg,#2980b9,#3498db)" },
+  { id: "comedy",     label: "Comedy",    bg: "linear-gradient(135deg,#f39c12,#f1c40f)" },
+  { id: "war",        label: "War",       bg: "linear-gradient(135deg,#5d6d7e,#7f8c8d)" },
+  { id: "highschool", label: "Highschool",bg: "linear-gradient(135deg,#27ae60,#2ecc71)" },
+  { id: "indian",     label: "Indian",    bg: "linear-gradient(135deg,#d35400,#e67e22)" },
+  { id: "thriller",   label: "Thriller",  bg: "linear-gradient(135deg,#6c3483,#a855f7)" },
+  { id: "sci-fi",     label: "Sci-Fi",    bg: "linear-gradient(135deg,#0e6655,#1abc9c)" },
+  { id: "christian",  label: "Christian", bg: "linear-gradient(135deg,#1a5276,#2e86c1)" },
 ];
 
 function GenreGrid() {
@@ -76,7 +77,8 @@ export function HomePage({ onPlay }: HomePageProps) {
   const warMovies       = byCategory(all, "war");
   const highschoolMovies = byCategory(all, "highschool");
   const indianMovies    = byCategory(all, "indian");
-  const scifiMovies     = byCategory(all, "sci-fi");
+  const scifiMovies      = byCategory(all, "sci-fi");
+  const christianMovies  = byCategory(all, "christian");
 
   const showAdminCarousel = !carouselLoading && carouselItems.length > 0;
   const carouselItem = carouselItems[current] ?? null;
@@ -197,6 +199,11 @@ export function HomePage({ onPlay }: HomePageProps) {
         <div id="genre-sci-fi">
           {scifiMovies.length > 0 && (
             <MovieRow title="Sci-Fi" movies={scifiMovies} onPlay={onPlay} />
+          )}
+        </div>
+        <div id="genre-christian">
+          {christianMovies.length > 0 && (
+            <MovieRow title="Christian" movies={christianMovies} onPlay={onPlay} />
           )}
         </div>
         {all.length === 0 && (
