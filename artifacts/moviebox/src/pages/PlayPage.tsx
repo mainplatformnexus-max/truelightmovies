@@ -93,7 +93,7 @@ export function PlayPage({ movie, onBack }: PlayPageProps) {
 
   const handlePlay = () => {
     requireSub(() => {
-      setIsPlaying(!isPlaying);
+      setIsPlaying(true);
     });
   };
 
@@ -107,8 +107,9 @@ export function PlayPage({ movie, onBack }: PlayPageProps) {
 
   const handleDownload = () => {
     requireSub(() => {
-      if (activeMovie.url) {
-        downloadContent(activeMovie.url, activeMovie.title, activeMovie.vjName);
+      const url = activeMovie.type === "series" ? currentEpUrl : activeMovie.url;
+      if (url) {
+        downloadContent(url, activeMovie.title, activeMovie.vjName);
       }
     });
   };
@@ -309,7 +310,7 @@ export function PlayPage({ movie, onBack }: PlayPageProps) {
           <div className="grid gap-1.5 md:gap-2" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(clamp(32px, 4vw, 44px), 1fr))" }}>
             {episodes.map((ep) => (
               <button key={ep.id}
-                onClick={() => requireSub(() => setSelectedEp(ep.episode))}
+                onClick={() => requireSub(() => { setSelectedEp(ep.episode); setIsPlaying(true); })}
                 className="aspect-square rounded-md flex items-center justify-center text-[10px] font-bold transition-all active:scale-95"
                 style={selectedEp === ep.episode
                   ? { background: "linear-gradient(135deg,#a855f7,#ec4899)", border: "1px solid rgba(168,85,247,0.6)", color: "white" }

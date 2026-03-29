@@ -95,17 +95,42 @@ export async function recordWatchHistory(uid: string, item: ContentItem) {
   }, { merge: true });
 }
 
-export function downloadContent(url: string, title: string, vjName?: string) {
+export async function downloadContent(url: string, title: string, vjName?: string) {
   if (!url) return;
   const vj = vjName || "VJ EMMA";
   const filename = `${title} ${vj} (www.truelightstudio.biz).mp4`;
-  const backendUrl = `https://download.mainplatform-nexus.workers.dev/?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename)}&download=1`;
-  const a = document.createElement("a");
-  a.href = backendUrl;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+
+  const triggerDownload = (href: string, name: string) => {
+    const a = document.createElement("a");
+    a.href = href;
+    a.download = name;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  try {
+    const response = await fetch(url, { mode: "cors" });
+    if (response.ok) {
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      triggerDownload(blobUrl, filename);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+      return;
+    }
+  } catch {
+  }
+
+  try {
+    const backendUrl = `https://download.mainplatform-nexus.workers.dev/?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename)}&download=1`;
+    triggerDownload(backendUrl, filename);
+    return;
+  } catch {
+  }
+
+  window.open(url, "_blank");
 }
 
 export async function shareContent(title: string, url?: string) {
