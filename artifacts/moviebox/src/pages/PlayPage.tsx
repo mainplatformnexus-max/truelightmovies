@@ -306,7 +306,7 @@ export function PlayPage({ movie, onBack }: PlayPageProps) {
 
         {/* Episodes */}
         {activeTab === "episodes" && activeMovie.type === "series" && (
-          <div className="grid gap-1.5" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(32px, 1fr))" }}>
+          <div className="grid gap-1.5 md:gap-2" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(clamp(32px, 4vw, 44px), 1fr))" }}>
             {episodes.map((ep) => (
               <button key={ep.id}
                 onClick={() => requireSub(() => setSelectedEp(ep.episode))}
