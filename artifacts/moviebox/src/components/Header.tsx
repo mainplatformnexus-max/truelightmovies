@@ -8,6 +8,11 @@ interface HeaderProps {
   onMenuToggle: () => void;
 }
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+}
+
 export function Header({ onMenuToggle }: HeaderProps) {
   const { profile, logout } = useAuth();
   const [scrolled, setScrolled] = useState(false);
@@ -17,9 +22,34 @@ export function Header({ onMenuToggle }: HeaderProps) {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [installed, setInstalled] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
 
   const loggedInUser = profile?.displayName || null;
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e as BeforeInstallPromptEvent);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    window.addEventListener("appinstalled", () => {
+      setInstalled(true);
+      setInstallPrompt(null);
+    });
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (!installPrompt) return;
+    await installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === "accepted") {
+      setInstalled(true);
+      setInstallPrompt(null);
+    }
+  };
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -48,6 +78,20 @@ export function Header({ onMenuToggle }: HeaderProps) {
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
+
+  const VIPIcon = () => (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M2 7l4 9h12l4-9-5 4-5-7-5 7-5-4z"/>
+      <rect x="6" y="17" width="12" height="2" rx="1"/>
+    </svg>
+  );
+
+  const InstallIcon = () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3v13M7 11l5 5 5-5"/>
+      <path d="M4 20h16"/>
+    </svg>
+  );
 
   return (
     <>
@@ -79,11 +123,22 @@ export function Header({ onMenuToggle }: HeaderProps) {
           )}
         </div>
         <div className="flex-1" />
+
+        {installPrompt && !installed && (
+          <button
+            onClick={handleInstall}
+            className="flex items-center gap-1.5 px-3 h-8 text-xs font-medium text-white/80 border border-white/25 hover:border-white/50 rounded-lg transition-colors whitespace-nowrap"
+          >
+            <InstallIcon />
+            <span>Install App</span>
+          </button>
+        )}
+
         <button
           onClick={() => { setShowLoginModal(false); setShowSubscribeModal(true); }}
           className="flex items-center gap-1.5 gradient-btn px-4 h-8 text-sm font-medium whitespace-nowrap"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          <VIPIcon />
           <span>Subscribe</span>
         </button>
 
@@ -154,14 +209,26 @@ export function Header({ onMenuToggle }: HeaderProps) {
             </button>
           )}
         </div>
+
+        {installPrompt && !installed && (
+          <button
+            onClick={handleInstall}
+            className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-md border border-white/25 text-white/70"
+            aria-label="Install App"
+          >
+            <InstallIcon />
+          </button>
+        )}
+
         <button
           onClick={() => { setShowLoginModal(false); setShowSubscribeModal(true); }}
           className="flex-shrink-0 gradient-btn flex items-center justify-center w-7 h-7"
           style={{ borderRadius: 6 }}
           aria-label="Subscribe"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          <VIPIcon />
         </button>
+
         {loggedInUser ? (
           <div ref={profileRef} className="relative flex-shrink-0">
             <button
