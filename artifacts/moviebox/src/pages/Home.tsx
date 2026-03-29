@@ -12,6 +12,7 @@ interface HomePageProps {
 }
 
 const GENRE_TILES = [
+  { id: "all",        label: "All",       bg: "linear-gradient(135deg,#a855f7,#ec4899)" },
   { id: "action",     label: "Action",    bg: "linear-gradient(135deg,#c0392b,#e74c3c)" },
   { id: "drama",      label: "Drama",     bg: "linear-gradient(135deg,#2980b9,#3498db)" },
   { id: "comedy",     label: "Comedy",    bg: "linear-gradient(135deg,#f39c12,#f1c40f)" },
@@ -57,7 +58,7 @@ export function HomePage({ onPlay }: HomePageProps) {
   const { items: carouselItems, loading: carouselLoading } = useCarousel();
   const [current, setCurrent] = useState(0);
   const [imgErr, setImgErr] = useState<Record<string, boolean>>({});
-  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
+  const [selectedGenre, setSelectedGenre] = useState<string | null>("all");
 
   const contentLoading = loading;
 
@@ -77,8 +78,9 @@ export function HomePage({ onPlay }: HomePageProps) {
   const showAdminCarousel = !carouselLoading && carouselItems.length > 0;
   const carouselItem = carouselItems[current] ?? null;
 
-  const filteredByGenre = selectedGenre
-    ? all.filter(i => i.category?.toLowerCase() === selectedGenre.toLowerCase())
+  const isFiltered = selectedGenre && selectedGenre !== "all";
+  const filteredByGenre = isFiltered
+    ? all.filter(i => i.category?.toLowerCase() === selectedGenre!.toLowerCase())
     : [];
 
   const activeGenre = GENRE_TILES.find(g => g.id === selectedGenre);
@@ -145,13 +147,13 @@ export function HomePage({ onPlay }: HomePageProps) {
             return (
               <button
                 key={g.id}
-                onClick={() => setSelectedGenre(isActive ? null : g.id)}
+                onClick={() => setSelectedGenre(g.id)}
                 className="px-2.5 py-0.5 md:px-3 md:py-1 rounded-full text-white text-[10px] md:text-xs font-medium whitespace-nowrap transition-all active:scale-95"
                 style={{
                   background: isActive ? g.bg : "rgba(255,255,255,0.1)",
-                  outline: isActive ? `2px solid white` : "2px solid transparent",
+                  outline: isActive ? "2px solid white" : "2px solid transparent",
                   outlineOffset: "1px",
-                  opacity: !selectedGenre || isActive ? 1 : 0.5,
+                  opacity: isActive ? 1 : 0.6,
                 }}
               >
                 {g.label}
@@ -162,20 +164,11 @@ export function HomePage({ onPlay }: HomePageProps) {
       </div>
 
       {/* Filtered genre view */}
-      {selectedGenre ? (
+      {isFiltered ? (
         <div className="px-3 md:px-0 pb-28 md:pb-10">
           <div className="flex items-center gap-2 mb-4">
-            <h2 className="text-white font-semibold text-sm" style={{ background: activeGenre?.bg, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              {activeGenre?.label}
-            </h2>
+            <h2 className="text-white font-semibold text-sm">{activeGenre?.label}</h2>
             <span className="text-white/40 text-xs">({filteredByGenre.length} titles)</span>
-            <button
-              onClick={() => setSelectedGenre(null)}
-              className="ml-auto text-[10px] text-white/40 hover:text-white/70 flex items-center gap-1 transition-colors"
-            >
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
-              Clear
-            </button>
           </div>
           {filteredByGenre.length > 0 ? (
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-2 md:gap-3">
