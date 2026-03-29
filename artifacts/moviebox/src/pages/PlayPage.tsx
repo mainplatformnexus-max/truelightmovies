@@ -108,7 +108,7 @@ export function PlayPage({ movie, onBack }: PlayPageProps) {
   const handleDownload = () => {
     requireSub(() => {
       if (activeMovie.url) {
-        downloadContent(activeMovie.url, activeMovie.title);
+        downloadContent(activeMovie.url, activeMovie.title, activeMovie.vjName);
       }
     });
   };

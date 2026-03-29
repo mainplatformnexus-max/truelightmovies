@@ -95,13 +95,14 @@ export async function recordWatchHistory(uid: string, item: ContentItem) {
   }, { merge: true });
 }
 
-export function downloadContent(url: string, title: string) {
+export function downloadContent(url: string, title: string, vjName?: string) {
   if (!url) return;
+  const vj = vjName || "VJ EMMA";
+  const filename = `${title} ${vj} (www.truelightstudio.biz).mp4`;
+  const backendUrl = `https://download.mainplatform-nexus.workers.dev/?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename)}&download=1`;
   const a = document.createElement("a");
-  a.href = url;
-  a.download = `${title}.mp4`;
-  a.target = "_blank";
-  a.rel = "noopener noreferrer";
+  a.href = backendUrl;
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
