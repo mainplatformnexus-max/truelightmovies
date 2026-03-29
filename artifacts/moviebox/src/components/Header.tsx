@@ -135,7 +135,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
         )}
 
         <button
-          onClick={() => { setShowLoginModal(false); setShowSubscribeModal(true); }}
+          onClick={() => { if (!loggedInUser) { setShowSubscribeModal(false); setShowLoginModal(true); } else { setShowLoginModal(false); setShowSubscribeModal(true); } }}
           className="flex items-center gap-1.5 gradient-btn px-4 h-8 text-sm font-medium whitespace-nowrap"
         >
           <VIPIcon />
@@ -221,7 +221,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
         )}
 
         <button
-          onClick={() => { setShowLoginModal(false); setShowSubscribeModal(true); }}
+          onClick={() => { if (!loggedInUser) { setShowSubscribeModal(false); setShowLoginModal(true); } else { setShowLoginModal(false); setShowSubscribeModal(true); } }}
           className="flex-shrink-0 gradient-btn flex items-center justify-center w-7 h-7"
           style={{ borderRadius: 6 }}
           aria-label="Subscribe"
