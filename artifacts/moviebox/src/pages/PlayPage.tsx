@@ -306,11 +306,11 @@ export function PlayPage({ movie, onBack }: PlayPageProps) {
 
         {/* Episodes */}
         {activeTab === "episodes" && activeMovie.type === "series" && (
-          <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2">
+          <div className="grid gap-1.5" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(32px, 1fr))" }}>
             {episodes.map((ep) => (
               <button key={ep.id}
                 onClick={() => requireSub(() => setSelectedEp(ep.episode))}
-                className="aspect-square rounded-lg flex items-center justify-center text-sm font-bold transition-all active:scale-95"
+                className="aspect-square rounded-md flex items-center justify-center text-[10px] font-bold transition-all active:scale-95"
                 style={selectedEp === ep.episode
                   ? { background: "linear-gradient(135deg,#a855f7,#ec4899)", border: "1px solid rgba(168,85,247,0.6)", color: "white" }
                   : { background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.7)", border: "1px solid transparent" }
